@@ -18,8 +18,16 @@ This project is just for fun and to learn python/dearpygui, mostly copy paste(ch
 
 > This is my PC spec, I know. please don't.
 
+## Run
+
+```bash
+python src/main.py
+```
+
 ## Credits
 
 [Hardware detection in python](https://www.thepythoncode.com/article/get-hardware-system-information-python)
 
 [DearPyGUI](https://github.com/hoffstadt/dearPyGui/)
+
+[py-cpuinfo](https://github.com/workhorsy/py-cpuinfo)
