@@ -1,0 +1,5 @@
+dearpygui
+py-cpuinfo
+GPUtil
+pyadl
+psutil
