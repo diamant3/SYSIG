@@ -99,7 +99,7 @@ with dpg.window(label="NETWORK INFORMATION", pos=[510, 120], width=290, height=2
     with dpg.tree_node(label="Network Interfaces", default_open=True):
         addrs = net_if_addrs()
         for name, addresses in addrs.items():
-            dpg.add_text("Name: {name}")
+            dpg.add_text(f"Name: {name}")
             for address in addresses:
                 if str(address.family) == 'AddressFamily.AF_INET':
                     dpg.add_text(f"IP Address: {address.address}", bullet=True)
