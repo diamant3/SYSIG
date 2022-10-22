@@ -25,7 +25,7 @@ def get_size(bytes):
 def get_release():
     pf = uname()
     ver = pf.version
-    if int(ver[5:]) > 22000: 
+    if int(ver[5:]) > 22000 and pf.system.lower() == "windows": 
         return "11"
     return ver
 
