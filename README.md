@@ -14,7 +14,7 @@ This project is just for fun and to learn python/dearpygui, mostly copy paste(ch
 
 ## Sample
 
-<img width="480px" src="assets/sample.png" />
+<img width="640px" src="assets/sample.png" />
 
 > This is my PC spec, I know. please don't.
 
