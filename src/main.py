@@ -34,6 +34,12 @@ dpg.create_context()
 with dpg.window(label="PROCESSOR INFORMATION", pos=[50, 100], width=500, height=300, no_close=True):
     dpg.add_text(f"Name: {cpu.get_name()} @ {cpu_freq().current} Mhz ", bullet=True)
     dpg.add_text(f"Total Core/s: {cpu.get_core_count()} ", bullet=True)
+
+    # TODO: do realtime cpu usage output (someone help me :))
+    dpg.add_text(f"Total CPU Usage: {cpu_percent()}% ", bullet=True)
+    with dpg.tree_node(label="CPU Usage(per core): "):
+        for core, percentage in enumerate(cpu_percent(interval=1, percpu=True)):
+            dpg.add_text(f" Core {core}: {percentage}%", bullet=True)
     dpg.add_text(f"Architecture: {cpu.get_arch()} ", bullet=True)
     with dpg.tree_node(label="Caches "):
         caches = cpu.get_caches()
