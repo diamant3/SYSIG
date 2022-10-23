@@ -11,12 +11,7 @@
 This is a small and simple GUI tool to gather your computer's information using Python.
 
 This project is just for fun and to learn Python and DearPyGui, It's mostly copy and paste(check [credits](#credits)) hehe :sweat_smile:
-
-## Sample
-
-<img width="640px" src="assets/sample.png" />
-
-> This is my PC spec, I know. please don't.
+> Maybe no need for sample, Check the [sample image](assets/sample.png)(outdated) if you want to see.
 
 ## Run
 
