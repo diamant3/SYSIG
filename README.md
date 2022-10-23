@@ -2,15 +2,15 @@
 
 <img width="480px" src="assets/sysig-no-bg.png" />
 
-*SYStem Information Gatherer*
+> *SYStem Information Gatherer*
 
 </div>
 
 ## Introduction
 
-This is a small and simple GUI tool to gather your computer information using python.
+This is a small and simple GUI tool to gather your computer's information using Python.
 
-This project is just for fun and to learn python/dearpygui, mostly copy paste(check [credits](#credits)) hehe :sweat_smile:
+This project is just for fun and to learn Python and DearPyGui, It's mostly copy and paste(check [credits](#credits)) hehe :sweat_smile:
 
 ## Sample
 
@@ -20,6 +20,14 @@ This project is just for fun and to learn python/dearpygui, mostly copy paste(ch
 
 ## Run
 
+Install required modules:
+
+```bash
+pip install -r requirements.txt
+```
+
+then run:
+
 ```bash
 python src/main.py
 ```
@@ -28,6 +36,12 @@ python src/main.py
 
 [Hardware detection in python](https://www.thepythoncode.com/article/get-hardware-system-information-python)
 
+[psutil](https://github.com/giampaolo/psutil)
+
 [DearPyGUI](https://github.com/hoffstadt/dearPyGui/)
 
 [py-cpuinfo](https://github.com/workhorsy/py-cpuinfo)
+
+## Contribute
+
+Open for any type of contribution, thanks!
