@@ -2,11 +2,15 @@ from datetime import datetime
 import dearpygui.dearpygui as dpg
 import cpu
 import gpu
+import opersys
+import helpers
 from psutil import *
 from platform import uname
 
 cpu = cpu.CPU
 gpu = gpu.GPU
+opersys = opersys.OPERSYS
+helpers = helpers.HELPERS
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 640
@@ -15,28 +19,16 @@ RED = [255, 0, 0]
 BLUE = [0, 0, 255]
 GREEN = [0, 255, 0]
 
-def get_size(bytes):
-    for unit in ["", "K", "M", "G", "T", "P"]:
-        if bytes <= 1024:
-            return f"{bytes:.2f}{unit}B"
-        bytes /= 1024
-
-# temporary fix for wrong detection in win 11
-def get_release():
-    pf = uname()
-    ver = pf.version
-    if int(ver[5:]) > 22000 and pf.system.lower() == "windows": 
-        return "11"
-    return ver
-
 dpg.create_context()
+dpg.create_viewport(title='SYSIG | System Information Gatherer', small_icon="res/icon.ico", width=WIN_WIDTH, height=WIN_HEIGHT)
+dpg.setup_dearpygui()
 
-with dpg.window(label="PROCESSOR INFORMATION", pos=[50, 100], width=500, height=300, no_close=True):
+with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350, no_close=True):
     dpg.add_text(f"Name: {cpu.get_name()} @ {cpu_freq().current} Mhz ", bullet=True)
     dpg.add_text(f"Total Core/s: {cpu.get_core_count()} ", bullet=True)
 
     # TODO: do realtime cpu usage output (someone help me :))
-    dpg.add_text(f"Total CPU Usage: {cpu_percent()}% ", bullet=True)
+    dpg.add_text(f"Total CPU Usage: {cpu_percent(interval=1)}% ", bullet=True)
     with dpg.tree_node(label="CPU Usage(per core): "):
         for core, percentage in enumerate(cpu_percent(interval=1, percpu=True)):
             dpg.add_text(f" Core {core}: {percentage}%", bullet=True)
@@ -55,12 +47,12 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[50, 100], width=500, height=
             for flag in range(len(flags)):
                 dpg.add_text(f"{flags[flag]}", color=GREEN, bullet=True)
 
-with dpg.window(label="MEMORY INFORMATION", pos=[310, 220], width=240, height=210, no_close=True):
+with dpg.window(label="MEMORY INFORMATION", pos=[0, 350], width=240, height=210, no_close=True):
     mem = virtual_memory()
     with dpg.tree_node(label="Memory details ", default_open=True):
-        dpg.add_text(f"Used: {get_size(mem.used)}({mem.percent}%)", bullet=True)
-        dpg.add_text(f"Available: {get_size(mem.available)}", bullet=True)
-        dpg.add_text(f"Total: {get_size(mem.total)}", bullet=True)
+        dpg.add_text(f"Used: {helpers.get_size(mem.used)}({mem.percent}%)", bullet=True)
+        dpg.add_text(f"Available: {helpers.get_size(mem.available)}", bullet=True)
+        dpg.add_text(f"Total: {helpers.get_size(mem.total)}", bullet=True)
     with dpg.tree_node(label="Swap Memory details", default_open=True):
         swap = swap_memory()
         used = swap.used
@@ -74,11 +66,11 @@ with dpg.window(label="MEMORY INFORMATION", pos=[310, 220], width=240, height=21
         if free < 0: free = 0
         if total < 0: total = 0
 
-        dpg.add_text(f"Used: {get_size(used)}({percent}%)", bullet=True)
-        dpg.add_text(f"Free: {get_size(free)}", bullet=True)
-        dpg.add_text(f"Total: {get_size(total)}", bullet=True)
+        dpg.add_text(f"Used: {helpers.get_size(used)}({percent}%)", bullet=True)
+        dpg.add_text(f"Free: {helpers.get_size(free)}", bullet=True)
+        dpg.add_text(f"Total: {helpers.get_size(total)}", bullet=True)
 
-with dpg.window(label="DISK INFORMATION", pos=[510, 120], width=630, height=230, no_close=True):
+with dpg.window(label="DISK INFORMATION", pos=[500, 0], width=630, height=230, no_close=True):
     with dpg.table(label="Disk details ", width=600, height=600, resizable=True, policy=dpg.mvTable_SizingStretchProp,
             borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True):
         dpg.add_table_column(label="Device")
@@ -97,11 +89,11 @@ with dpg.window(label="DISK INFORMATION", pos=[510, 120], width=630, height=230,
                     dpg.add_text(f"{prt.fstype}")
                     try: usage = disk_usage(prt.mountpoint)
                     except PermissionError: continue
-                    dpg.add_text(f"{get_size(usage.used)}({usage.percent}%)")
-                    dpg.add_text(f"{get_size(usage.free)}")
-                    dpg.add_text(f"{get_size(usage.total)}")
+                    dpg.add_text(f"{helpers.get_size(usage.used)}({usage.percent}%)")
+                    dpg.add_text(f"{helpers.get_size(usage.free)}")
+                    dpg.add_text(f"{helpers.get_size(usage.total)}")
 
-with dpg.window(label="NETWORK INFORMATION", pos=[510, 120], width=290, height=230, no_close=True):
+with dpg.window(label="NETWORK INFORMATION", pos=[240, 350], width=290, height=230, no_close=True):
     with dpg.tree_node(label="Network Interfaces", default_open=True):
         addrs = net_if_addrs()
         for name, addresses in addrs.items():
@@ -116,29 +108,26 @@ with dpg.window(label="NETWORK INFORMATION", pos=[510, 120], width=290, height=2
                     dpg.add_text(f"Netmask: {address.netmask}", bullet=True)
                     dpg.add_text(f"Broadcast MAC: {address.broadcast}", bullet=True)
 
-with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[510, 120], width=590, height=230, no_close=True):
+with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[530, 230], width=590, height=230, no_close=True):
     with dpg.tree_node(label="OS details", default_open=True):
         pf = uname()
         dpg.add_text(f"Computer Name: {pf.node}", bullet=True)
         dpg.add_text(f"System: {pf.system}", bullet=True)
-        dpg.add_text(f"Release: {get_release()}", bullet=True)
+        dpg.add_text(f"Release: {opersys.get_release()}", bullet=True)
         dpg.add_text(f"Version: {pf.version}", bullet=True)
         dpg.add_text(f"Machine: {pf.machine}", bullet=True)
         dpg.add_text(f"Processor: {pf.processor}", bullet=True)
     
-    timepstamp = boot_time()
-    bt = datetime.fromtimestamp(timepstamp)
+    timestamp = boot_time()
+    bt = datetime.fromtimestamp(timestamp)
     boot = bt.strftime("%m/%d/%Y %H:%M:%S")
     dpg.add_text(f"Boot Time: {boot}")
 
-with dpg.window(label="GPU INFORMATION", pos=[310, 150], width=280, height=100, no_close=True):
+with dpg.window(label="GPU INFORMATION", pos=[530, 460], width=280, height=100, no_close=True):
     gpus = gpu.get_name()
     for gpu in gpus:
         dpg.add_text(f"Name: {gpu.decode('utf-8')}")
 
-    
-dpg.create_viewport(title='SYStem Information Gatherer', small_icon="assets/icon.ico", width=WIN_WIDTH, height=WIN_HEIGHT)
-dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
