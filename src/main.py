@@ -122,7 +122,7 @@ with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[510, 120], width=590,
     
     timepstamp = boot_time()
     bt = datetime.fromtimestamp(timepstamp)
-    boot = f"{bt.month}/{bt.day}/{bt.year} {bt.hour}:{bt.minute}:{bt.second}"
+    boot = bt.strftime("%m/%d/%Y %H:%M:%S")
     dpg.add_text(f"Boot Time: {boot}")
 
 with dpg.window(label="GPU INFORMATION", pos=[310, 150], width=280, height=100, no_close=True):
