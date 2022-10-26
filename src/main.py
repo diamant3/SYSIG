@@ -20,7 +20,7 @@ BLUE = [0, 0, 255]
 GREEN = [0, 255, 0]
 
 dpg.create_context()
-dpg.create_viewport(title='SYSIG | System Information Gatherer', small_icon="res/icon.ico", width=WIN_WIDTH, height=WIN_HEIGHT)
+dpg.create_viewport(title='SYSIG | System Information Gatherer', small_icon="res/icon.ico", x_pos=0, y_pos=0, width=WIN_WIDTH, height=WIN_HEIGHT)
 dpg.setup_dearpygui()
 
 with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350, no_close=True):
