@@ -42,10 +42,23 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350
         dpg.add_text(f"L2 Cache Associativity: {caches[4]}", bullet=True)
         dpg.add_text(f"L3 Cache Size: {caches[5]}", bullet=True)
     with dpg.tree_node(label="Flags ", default_open=True):
-        with dpg.child_window(label="Flags ", autosize_x=True, height=150):
+        with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp, resizable=True, borders_outerH=True,
+            borders_innerV=True, borders_innerH=True, borders_outerV=True):
+            for _ in range(11):
+                dpg.add_table_column()
+
+            idx = 0
             flags = cpu.get_flags()
-            for flag in range(len(flags)):
-                dpg.add_text(f"{flags[flag]}", color=GREEN, bullet=True)
+
+            # credit from @Sikwate: https://github.com/hoffstadt/DearPyGui/discussions/1918#discussioncomment-3960795
+            for row in range(11):
+                with dpg.table_row():
+                    for col in range(11):
+                        if idx >= len(flags):
+                            dpg.add_text(f"")
+                        else:
+                            dpg.add_text(f"{flags[idx]}", color=GREEN)
+                        idx += 1
 
 with dpg.window(label="MEMORY INFORMATION", pos=[0, 350], width=240, height=210, no_close=True):
     mem = virtual_memory()
