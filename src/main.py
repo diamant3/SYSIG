@@ -68,20 +68,10 @@ with dpg.window(label="MEMORY INFORMATION", pos=[0, 350], width=240, height=210,
         dpg.add_text(f"Total: {helpers.get_size(mem.total)}", bullet=True)
     with dpg.tree_node(label="Swap Memory details", default_open=True):
         swap = swap_memory()
-        used = swap.used
-        percent = swap.percent
-        free = swap.free
-        total = swap.total
 
-        # check if swap details are available
-        if used < 0: used = 0
-        if percent < 0.00: percent = 0.0
-        if free < 0: free = 0
-        if total < 0: total = 0
-
-        dpg.add_text(f"Used: {helpers.get_size(used)}({percent}%)", bullet=True)
-        dpg.add_text(f"Free: {helpers.get_size(free)}", bullet=True)
-        dpg.add_text(f"Total: {helpers.get_size(total)}", bullet=True)
+        dpg.add_text(f"Used: {helpers.get_size(swap.used)}({swap.percent}%)", bullet=True)
+        dpg.add_text(f"Free: {helpers.get_size(swap.free)}", bullet=True)
+        dpg.add_text(f"Total: {helpers.get_size(swap.total)}", bullet=True)
 
 with dpg.window(label="DISK INFORMATION", pos=[500, 0], width=630, height=230, no_close=True):
     with dpg.table(label="Disk details ", width=600, height=600, resizable=True, policy=dpg.mvTable_SizingStretchProp,
