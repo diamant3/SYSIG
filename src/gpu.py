@@ -1,17 +1,17 @@
-from GPUtil import *
-from pyadl import *
+import GPUtil
+import pyadl
+
 
 class GPU:
     def get_name():
         gpu_list = []
 
         # amd
-        amd = ADLManager.getInstance().getDevices()
+        amd = pyadl.ADLManager.getInstance().getDevices()
         for gpu in amd:
             gpu_list.append(gpu.adapterName)
-        
         # nvidia
-        nvidia = getGPUs()
+        nvidia = GPUtil.getGPUs()
         for gpu in nvidia:
             gpu_list.append(gpu.name)
 

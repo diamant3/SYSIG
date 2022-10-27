@@ -4,8 +4,9 @@ import cpu
 import gpu
 import opersys
 import helpers
-from psutil import *
+import psutil
 from platform import uname
+
 
 cpu = cpu.CPU
 gpu = gpu.GPU
@@ -20,17 +21,20 @@ BLUE = [0, 0, 255]
 GREEN = [0, 255, 0]
 
 dpg.create_context()
-dpg.create_viewport(title='SYSIG | System Information Gatherer', small_icon="res/icon.ico", x_pos=0, y_pos=0, width=WIN_WIDTH, height=WIN_HEIGHT)
+dpg.create_viewport(title='SYSIG | System Information Gatherer',
+                    small_icon="res/icon.ico",
+                    x_pos=0, y_pos=0, width=WIN_WIDTH, height=WIN_HEIGHT)
+
 dpg.setup_dearpygui()
 
 with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350, no_close=True):
-    dpg.add_text(f"Name: {cpu.get_name()} @ {cpu_freq().current} Mhz ", bullet=True)
+    dpg.add_text(f"Name: {cpu.get_name()} @ {psutil.cpu_freq().current} Mhz ", bullet=True)
     dpg.add_text(f"Total Core/s: {cpu.get_core_count()} ", bullet=True)
 
     # TODO: do realtime cpu usage output (someone help me :))
-    dpg.add_text(f"Total CPU Usage: {cpu_percent(interval=1)}% ", bullet=True)
+    dpg.add_text(f"Total CPU Usage: {psutil.cpu_percent(interval=1)}% ", bullet=True)
     with dpg.tree_node(label="CPU Usage(per core): "):
-        for core, percentage in enumerate(cpu_percent(interval=1, percpu=True)):
+        for core, percentage in enumerate(psutil.cpu_percent(interval=1, percpu=True)):
             dpg.add_text(f" Core {core}: {percentage}%", bullet=True)
     dpg.add_text(f"Architecture: {cpu.get_arch()} ", bullet=True)
     with dpg.tree_node(label="Caches "):
@@ -42,8 +46,9 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350
         dpg.add_text(f"L2 Cache Associativity: {caches[4]}", bullet=True)
         dpg.add_text(f"L3 Cache Size: {caches[5]}", bullet=True)
     with dpg.tree_node(label="Flags ", default_open=True):
-        with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp, resizable=True, borders_outerH=True,
-            borders_innerV=True, borders_innerH=True, borders_outerV=True):
+        with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
+                        borders_outerV=True, borders_innerV=True,
+                       resizable=True, borders_outerH=True, borders_innerH=True):
             for _ in range(11):
                 dpg.add_table_column()
 
@@ -55,27 +60,28 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350
                 with dpg.table_row():
                     for col in range(11):
                         if idx >= len(flags):
-                            dpg.add_text(f"")
+                            dpg.add_text("Empty")
                         else:
                             dpg.add_text(f"{flags[idx]}", color=GREEN)
                         idx += 1
 
 with dpg.window(label="MEMORY INFORMATION", pos=[0, 350], width=240, height=210, no_close=True):
-    mem = virtual_memory()
+    mem = psutil.virtual_memory()
     with dpg.tree_node(label="Memory details ", default_open=True):
         dpg.add_text(f"Used: {helpers.get_size(mem.used)}({mem.percent}%)", bullet=True)
         dpg.add_text(f"Available: {helpers.get_size(mem.available)}", bullet=True)
         dpg.add_text(f"Total: {helpers.get_size(mem.total)}", bullet=True)
     with dpg.tree_node(label="Swap Memory details", default_open=True):
-        swap = swap_memory()
+        swap = psutil.swap_memory()
 
         dpg.add_text(f"Used: {helpers.get_size(swap.used)}({swap.percent}%)", bullet=True)
         dpg.add_text(f"Free: {helpers.get_size(swap.free)}", bullet=True)
         dpg.add_text(f"Total: {helpers.get_size(swap.total)}", bullet=True)
 
 with dpg.window(label="DISK INFORMATION", pos=[500, 0], width=630, height=230, no_close=True):
-    with dpg.table(label="Disk details ", width=600, height=600, resizable=True, policy=dpg.mvTable_SizingStretchProp,
-            borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True):
+    with dpg.table(label="Disk details ", resizable=True, policy=dpg.mvTable_SizingStretchProp,
+                   borders_outerV=True, borders_innerV=True,
+                   borders_outerH=True, borders_innerH=True):
         dpg.add_table_column(label="Device")
         dpg.add_table_column(label="Mountpoint")
         dpg.add_table_column(label="File System type")
@@ -83,22 +89,24 @@ with dpg.window(label="DISK INFORMATION", pos=[500, 0], width=630, height=230, n
         dpg.add_table_column(label="Free")
         dpg.add_table_column(label="Total")
 
-        prts = disk_partitions()
+        prts = psutil.disk_partitions()
         for prt in prts:
             with dpg.table_row():
                 for row in range(16):
                     dpg.add_text(f"{prt.device}", color=GREEN)
                     dpg.add_text(f"{prt.mountpoint}")
                     dpg.add_text(f"{prt.fstype}")
-                    try: usage = disk_usage(prt.mountpoint)
-                    except PermissionError: continue
+                    try:
+                        usage = psutil.disk_usage(prt.mountpoint)
+                    except PermissionError:
+                        continue
                     dpg.add_text(f"{helpers.get_size(usage.used)}({usage.percent}%)")
                     dpg.add_text(f"{helpers.get_size(usage.free)}")
                     dpg.add_text(f"{helpers.get_size(usage.total)}")
 
 with dpg.window(label="NETWORK INFORMATION", pos=[240, 350], width=290, height=230, no_close=True):
     with dpg.tree_node(label="Network Interfaces", default_open=True):
-        addrs = net_if_addrs()
+        addrs = psutil.net_if_addrs()
         for name, addresses in addrs.items():
             dpg.add_text(f"Name: {name}")
             for address in addresses:
@@ -120,8 +128,8 @@ with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[530, 230], width=590,
         dpg.add_text(f"Version: {pf.version}", bullet=True)
         dpg.add_text(f"Machine: {pf.machine}", bullet=True)
         dpg.add_text(f"Processor: {pf.processor}", bullet=True)
-    
-    timestamp = boot_time()
+
+    timestamp = psutil.boot_time()
     bt = datetime.fromtimestamp(timestamp)
     boot = bt.strftime("%m/%d/%Y %H:%M:%S")
     dpg.add_text(f"Boot Time: {boot}")
