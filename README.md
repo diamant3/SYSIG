@@ -15,10 +15,11 @@ This project is just for fun and to learn Python and DearPyGui, It's mostly copy
 
 ## Run
 
-Install required modules:
+Upgrade pip then install required modules:
 
 ```shell
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
 then run:
