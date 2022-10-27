@@ -6,6 +6,8 @@
 
 </div>
 
+[![python lint](https://github.com/diamant3/SYSIG/actions/workflows/python-lint.yml/badge.svg)](https://github.com/diamant3/SYSIG/actions/workflows/python-lint.yml)
+
 ## Introduction
 
 This is a small and simple GUI tool to gather your computer's information using Python.
