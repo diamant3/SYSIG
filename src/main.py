@@ -131,8 +131,8 @@ with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[530, 230], width=590,
 
     timestamp = psutil.boot_time()
     bt = datetime.fromtimestamp(timestamp)
-    boot = bt.strftime("%m/%d/%Y %H:%M:%S")
-    dpg.add_text(f"Boot Time: {boot}")
+    boot = bt.strftime("%m/%d/%Y %I:%M:%S %p")
+    dpg.add_text(f"Last boot timestamp: {boot}")
 
 with dpg.window(label="GPU INFORMATION", pos=[530, 460], width=280, height=100, no_close=True):
     gpus = gpu.get_name()
