@@ -12,7 +12,11 @@
 
 This is a small and simple GUI tool to gather your computer's information using Python.
 
-> Maybe no need for sample, Check the [sample image](res/sample.png)(outdated) if you want to see.
+## Sample
+
+![image](res/sample.png)
+
+> This sample image tends to change from time to time because of changes in code. Thank you for your understanding!
 
 ## Run
 
