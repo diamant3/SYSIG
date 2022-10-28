@@ -47,7 +47,7 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350
         dpg.add_text(f"L3 Cache Size: {caches[5]}", bullet=True)
     with dpg.tree_node(label="Flags ", default_open=True):
         with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
-                        borders_outerV=True, borders_innerV=True,
+                       borders_outerV=True, borders_innerV=True,
                        resizable=True, borders_outerH=True, borders_innerH=True):
             for _ in range(11):
                 dpg.add_table_column()
@@ -139,6 +139,11 @@ with dpg.window(label="GPU INFORMATION", pos=[530, 460], width=280, height=100, 
     for gpu in gpus:
         dpg.add_text(f"Name: {gpu.decode('utf-8')}")
 
+with dpg.theme() as global_theme:
+    with dpg.theme_component(dpg.mvAll):
+        dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 6, category=dpg.mvThemeCat_Core)
+
+dpg.bind_theme(global_theme)
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
