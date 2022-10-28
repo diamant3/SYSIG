@@ -1,10 +1,4 @@
-<div align="center">
-
-<img width="480px" src="res/sysig-no-bg.png" />
-
-> ***SYS**tem **I**nformation **G**atherer*
-
-</div>
+![banner](res/banner.png)
 
 [![python lint](https://github.com/diamant3/SYSIG/actions/workflows/python-lint.yml/badge.svg)](https://github.com/diamant3/SYSIG/actions/workflows/python-lint.yml)
 
