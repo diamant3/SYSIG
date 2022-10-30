@@ -22,9 +22,7 @@ class CPU:
             0: "l1_data_cache_size",
             1: "l1_instruction_cache_size",
             2: "l2_cache_size",
-            3: "l2_cache_line_size",
-            4: "l2_cache_associativity",
-            5: "l3_cache_size"
+            3: "l3_cache_size"
         }
 
         caches = []

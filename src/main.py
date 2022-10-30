@@ -42,9 +42,7 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350
         dpg.add_text(f"L1 Data Cache Size: {caches[0]}", bullet=True)
         dpg.add_text(f"L1 Instruction Cache Size: {caches[1]}", bullet=True)
         dpg.add_text(f"L2 Cache Size: {caches[2]}", bullet=True)
-        dpg.add_text(f"L2 Cache Line Size: {caches[3]}", bullet=True)
-        dpg.add_text(f"L2 Cache Associativity: {caches[4]}", bullet=True)
-        dpg.add_text(f"L3 Cache Size: {caches[5]}", bullet=True)
+        dpg.add_text(f"L3 Cache Size: {caches[3]}", bullet=True)
     with dpg.tree_node(label="Flags ", default_open=True):
         with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
                        borders_outerV=True, borders_innerV=True,
