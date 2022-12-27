@@ -125,7 +125,6 @@ with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[530, 230], width=590,
         dpg.add_text(f"Release: {opersys.get_release()}", bullet=True)
         dpg.add_text(f"Version: {pf.version}", bullet=True)
         dpg.add_text(f"Machine: {pf.machine}", bullet=True)
-        dpg.add_text(f"Processor: {pf.processor}", bullet=True)
 
     timestamp = psutil.boot_time()
     bt = datetime.fromtimestamp(timestamp)
