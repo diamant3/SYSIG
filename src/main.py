@@ -7,12 +7,6 @@ import helpers
 import psutil
 from platform import uname
 
-
-cpu = cpu.CPU
-gpu = gpu.GPU
-opersys = opersys.OPERSYS
-helpers = helpers.HELPERS
-
 WIN_WIDTH = 1024
 WIN_HEIGHT = 640
 
@@ -133,8 +127,8 @@ with dpg.window(label="OPERATING SYSTEM INFORMATION", pos=[530, 230], width=590,
 
 with dpg.window(label="GPU INFORMATION", pos=[530, 460], width=280, height=100, no_close=True):
     gpus = gpu.get_name()
-    for gpu in gpus:
-        dpg.add_text(f"Name: {gpu.decode('utf-8')}")
+    for gfx in gpus:
+        dpg.add_text(f"Name: {gfx.decode('utf-8')}")
 
 with dpg.theme() as global_theme:
     with dpg.theme_component(dpg.mvAll):
