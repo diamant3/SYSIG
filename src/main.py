@@ -6,6 +6,7 @@ import opersys
 import helpers
 import psutil
 from platform import uname
+import socket
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 640
@@ -102,11 +103,11 @@ with dpg.window(label="NETWORK INFORMATION", pos=[240, 350], width=290, height=2
         for name, addresses in addrs.items():
             dpg.add_text(f"Name: {name}")
             for address in addresses:
-                if str(address.family) == 'AddressFamily.AF_INET':
+                if address.family == socket.AF_INET:
                     dpg.add_text(f"IP Address: {address.address}", bullet=True)
                     dpg.add_text(f"Netmask: {address.netmask}", bullet=True)
                     dpg.add_text(f"Broadcast IP: {address.broadcast}", bullet=True)
-                elif str(address.family) == 'AddressFamily.AF_LINK':
+                if address.family == psutil.AF_LINK:
                     dpg.add_text(f"MAC Address: {address.address}", bullet=True)
                     dpg.add_text(f"Netmask: {address.netmask}", bullet=True)
                     dpg.add_text(f"Broadcast MAC: {address.broadcast}", bullet=True)
