@@ -42,21 +42,24 @@ with dpg.window(label="PROCESSOR INFORMATION", pos=[0, 0], width=500, height=350
         with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp,
                        borders_outerV=True, borders_innerV=True,
                        resizable=True, borders_outerH=True, borders_innerH=True):
-            for _ in range(11):
-                dpg.add_table_column()
-
+            COL = 11
             idx = 0
             flags = cpu.get_flags()
 
+            for _ in range(COL):
+                dpg.add_table_column()
+
             # credit from @Sikwate: https://github.com/hoffstadt/DearPyGui/discussions/1918#discussioncomment-3960795
-            for row in range(11):
+            # improved by @diamant3
+            rows = int(len(flags) / COL) + 1
+            for row in range(rows):
                 with dpg.table_row():
-                    for col in range(11):
+                    for col in range(COL):
+                        idx = row * COL + col
                         if idx >= len(flags):
                             dpg.add_text("Empty")
                         else:
                             dpg.add_text(f"{flags[idx]}", color=GREEN)
-                        idx += 1
 
 with dpg.window(label="MEMORY INFORMATION", pos=[0, 350], width=240, height=210, no_close=True):
     mem = psutil.virtual_memory()
