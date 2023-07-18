@@ -3,3 +3,4 @@ py-cpuinfo
 GPUtil
 pyadl
 psutil
+humanize

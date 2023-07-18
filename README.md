@@ -6,12 +6,6 @@
 
 This is a small and simple GUI tool to gather your computer's information using Python.
 
-## Sample
-
-![image](res/sample.png)
-
-> This sample image tends to change from time to time because of changes in code. Thank you for your understanding!
-
 ## Run
 
 Upgrade pip then install required modules:
@@ -24,7 +18,7 @@ python -m pip install -r requirements.txt
 then run:
 
 ```shell
-python src/main.py
+python sysig.py
 ```
 
 ## Credits
