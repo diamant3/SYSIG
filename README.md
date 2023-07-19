@@ -1,6 +1,6 @@
 ![banner](res/banner.png)
 
-[![python lint](https://github.com/diamant3/SYSIG/actions/workflows/python-lint.yml/badge.svg)](https://github.com/diamant3/SYSIG/actions/workflows/python-lint.yml)
+[![Pylint](https://github.com/diamant3/SYSIG/actions/workflows/Pylint.yml/badge.svg)](https://github.com/diamant3/SYSIG/actions/workflows/Pylint.yml)
 
 ## Introduction
 
