@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from cpuinfo import get_cpu_info as gci
+from cpuinfo import get_cpu_info
 from datetime import datetime
 
 import platform
@@ -11,7 +11,7 @@ import subprocess
 import GPUtil
 import pyadl
 
-gci = gci()
+gci = get_cpu_info()
 WIN_WIDTH = 800
 WIN_HEIGHT = 400
 
