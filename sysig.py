@@ -24,6 +24,7 @@ WIN_HEIGHT = 400
 
 dpg.create_context()
 
+
 # Get CPU Total Utilization
 def get_cpu_util():
     """Get CPU Total Utilization"""
@@ -121,7 +122,7 @@ with dpg.window(
             gpu_list.append(gpu.name)
 
         for gfx in gpu_list:
-            dpg.add_text(f"Graphics Name: {gfx.decode('utf-8')}")
+            dpg.add_text(f"Graphics Name: {gfx.decode('utf-8')}", bullet=True)
 
     with dpg.collapsing_header(label="Memory"):
         mem = psutil.virtual_memory()
