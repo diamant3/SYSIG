@@ -1,15 +1,22 @@
-import dearpygui.dearpygui as dpg
-from cpuinfo import get_cpu_info
+"""
+    SYSIG - System Information Gatherer
+
+    Simple GUI tool to gather system information in your computer
+"""
+
 from datetime import datetime
 
 import platform
-import humanize
 import socket
-import psutil
 import threading
 import subprocess
 import GPUtil
 import pyadl
+import psutil
+import humanize
+
+import dearpygui.dearpygui as dpg
+from cpuinfo import get_cpu_info
 
 gci = get_cpu_info()
 WIN_WIDTH = 800
@@ -17,8 +24,10 @@ WIN_HEIGHT = 400
 
 dpg.create_context()
 
-
+# Get CPU Total Utilization
 def get_cpu_util():
+    """Get CPU Total Utilization"""
+
     while True:
         cpu_val = psutil.cpu_percent(interval=1, percpu=False)
         dpg.set_value(cpu_progress_bar, 1.0 / 100.0 * cpu_val)
@@ -49,25 +58,25 @@ with dpg.window(
                 l1_i = humanize.naturalsize(gci['l1_instruction_cache_size'], gnu=True)
                 dpg.add_text(f"L1 Instruction Cache Size: {l1_i}")
             except KeyError:
-                dpg.add_text(f"L1 Instruction Cache Size: Can't determine")
+                dpg.add_text("L1 Instruction Cache Size: Can't determine")
 
             try:
                 l1_d = humanize.naturalsize(gci['l1_data_cache_size'], gnu=True)
                 dpg.add_text(f"L1 Data Cache Size: {l1_d}")
             except KeyError:
-                dpg.add_text(f"L1 Data Cache Size: Can't determine")
+                dpg.add_text("L1 Data Cache Size: Can't determine")
 
             try:
                 l2 = humanize.naturalsize(gci['l2_cache_size'], gnu=True)
                 dpg.add_text(f"L2 Cache Size: {l2}")
             except KeyError:
-                dpg.add_text(f"L2 Cache Size: Can't determine")
+                dpg.add_text("L2 Cache Size: Can't determine")
 
             try:
                 l3 = humanize.naturalsize(gci['l3_cache_size'], gnu=True)
                 dpg.add_text(f"L3 Cache Size: {l3}")
             except KeyError:
-                dpg.add_text(f"L3 Cache Size: Can't determine")
+                dpg.add_text("L3 Cache Size: Can't determine")
 
         with dpg.tree_node(label="Flags"):
             with dpg.table(
@@ -82,7 +91,7 @@ with dpg.window(
                 delay_search=True
             ):
                 COL = 11
-                idx = 0
+                FLAG = 0
                 flags = gci['flags']
 
                 for _ in range(COL):
@@ -93,11 +102,11 @@ with dpg.window(
                 for row in range(rows):
                     with dpg.table_row():
                         for col in range(COL):
-                            idx = row * COL + col
-                            if idx >= len(flags):
+                            FLAG = row * COL + col
+                            if FLAG >= len(flags):
                                 dpg.add_text("---")
                             else:
-                                dpg.add_text(f"{flags[idx]}")
+                                dpg.add_text(f"{flags[FLAG]}")
 
     with dpg.collapsing_header(label="Graphics"):
         gpu_list = []
@@ -116,16 +125,24 @@ with dpg.window(
 
     with dpg.collapsing_header(label="Memory"):
         mem = psutil.virtual_memory()
+        mem_used = humanize.naturalsize(mem.used)
+        mem_percent = mem.percent
+        mem_avail = humanize.naturalsize(mem.available)
+        mem_total = humanize.naturalsize(mem.total)
         dpg.add_text("MAIN MEMORY", color=(0, 255, 0))
-        dpg.add_text(f"Used Memory: {humanize.naturalsize(mem.used)}({mem.percent}%)", bullet=True)
-        dpg.add_text(f"Available Memory: {humanize.naturalsize(mem.available)}", bullet=True)
-        dpg.add_text(f"Total Memory: {humanize.naturalsize(mem.total)}", bullet=True)
+        dpg.add_text(f"Used Memory: {mem_used}({mem_percent}%)", bullet=True)
+        dpg.add_text(f"Available Memory: {mem_avail}", bullet=True)
+        dpg.add_text(f"Total Memory: {mem_total}", bullet=True)
 
         swap = psutil.swap_memory()
+        swap_used = humanize.naturalsize(swap.used)
+        swap_percent = swap.percent
+        swap_free = humanize.naturalsize(swap.free)
+        swap_total = humanize.naturalsize(swap.total)
         dpg.add_text("SWAP MEMORY", color=(0, 255, 0))
-        dpg.add_text(f"Used Swap Memory: {humanize.naturalsize(swap.used)}({swap.percent}%)", bullet=True)
-        dpg.add_text(f"Free Swap Memory: {humanize.naturalsize(swap.free)}", bullet=True)
-        dpg.add_text(f"Total Swap Memory: {humanize.naturalsize(swap.total)}", bullet=True)
+        dpg.add_text(f"Used Swap Memory: {swap_used}({swap_percent}%)", bullet=True)
+        dpg.add_text(f"Free Swap Memory: {swap_free}", bullet=True)
+        dpg.add_text(f"Total Swap Memory: {swap_total}", bullet=True)
 
     with dpg.collapsing_header(label="Disk"):
         with dpg.table(
@@ -176,32 +193,35 @@ with dpg.window(
     with dpg.collapsing_header(label="Operating System"):
         if platform.system() == 'Windows':
             try:
-                brand = subprocess.check_output('wmic csproduct get vendor', shell=True)
-                brand = brand.decode('utf-8').strip().split('\n')[1]
-                model = subprocess.check_output('wmic csproduct get name', shell=True)
-                model = model.decode('utf-8').strip().split('\n')[1]
+                BRAND = subprocess.check_output('wmic csproduct get vendor', shell=True)
+                BRAND = BRAND.decode('utf-8').strip().split('\n')[1]
+                MODEL = subprocess.check_output('wmic csproduct get name', shell=True)
+                MODEL = MODEL.decode('utf-8').strip().split('\n')[1]
 
-                dpg.add_text(f"Brand: {brand}", bullet=True)
-                dpg.add_text(f"Model: {model}", bullet=True)
+                dpg.add_text(f"Brand: {BRAND}", bullet=True)
+                dpg.add_text(f"Model: {MODEL}", bullet=True)
             except subprocess.CalledProcessError:
-                dpg.add_text(f"Brand: Can't determine", bullet=True)
-                dpg.add_text(f"Model: Can't determine", bullet=True)
-                pass
+                dpg.add_text("Brand: Can't determine", bullet=True)
+                dpg.add_text("Model: Can't determine", bullet=True)
 
         elif platform.system() == 'Linux':
             try:
-                brand = subprocess.check_output('dmidecode -s system-manufacturer', shell=True).decode('utf-8').strip()
-                model = subprocess.check_output('dmidecode -s system-product-name', shell=True).decode('utf-8').strip()
+                BRAND = subprocess.check_output('dmidecode -s system-manufacturer', shell=True)
+                BRAND = BRAND.decode('utf-8').strip()
+                MODEL = subprocess.check_output('dmidecode -s system-product-name', shell=True)
+                MODEL = MODEL.decode('utf-8').strip()
+
+                dpg.add_text(f"Brand: {BRAND}", bullet=True)
+                dpg.add_text(f"Model: {MODEL}", bullet=True)
             except subprocess.CalledProcessError:
-                dpg.add_text(f"Brand: Can't determine", bullet=True)
-                dpg.add_text(f"Model: Can't determine", bullet=True)
-                pass
+                dpg.add_text("Brand: Can't determine", bullet=True)
+                dpg.add_text("Model: Can't determine", bullet=True)
 
         uname = platform.uname()
         dpg.add_text(f"System: {uname.system}", bullet=True)
         if uname.system == "Windows":
             if int(uname.version[5:]) > 22000:
-                dpg.add_text(f"Version: 11", bullet=True)
+                dpg.add_text("Version: 11", bullet=True)
         dpg.add_text(f"Machine: {uname.machine}", bullet=True)
 
         timestamp = psutil.boot_time()
