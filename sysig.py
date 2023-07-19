@@ -211,8 +211,8 @@ with dpg.window(
 
 dpg.create_viewport(
     title="System Information Gatherer",
-    small_icon="../res/icon.ico",
-    large_icon="../res/icon.ico",
+    small_icon="res/icon.ico",
+    large_icon="res/icon.ico",
     resizable=False,
     max_width=WIN_WIDTH,
     max_height=WIN_HEIGHT
