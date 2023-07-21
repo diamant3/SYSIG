@@ -6,6 +6,10 @@
 
 This is a small and simple GUI tool to gather your computer's information using Python.
 
+## Demo
+
+https://github.com/diamant3/SYSIG/assets/71203851/b0454b5e-e3cb-4050-8f3c-853fb65eed16
+
 ## Run
 
 Upgrade pip then install required modules:
@@ -20,6 +24,9 @@ then run:
 ```shell
 python sysig.py
 ```
+
+> **Note**
+> This is just a hobby project and all information you will see in the app is based on the Python modules's detection capabilities. Thank you for your understanding!
 
 ## Credits
 
