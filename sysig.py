@@ -11,11 +11,9 @@ import platform
 import socket
 import threading
 import subprocess
+import GPUtil
 import psutil
 import humanize
-import dearpygui.dearpygui as dpg
-from cpuinfo import get_cpu_info
-import GPUtil
 
 # Conditionally import wmi for Windows
 if platform.system() == 'Windows':
