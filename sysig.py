@@ -179,15 +179,16 @@ with dpg.window(
 
         def update_gpu_temperatures():
             while True:
-                # NVIDIA GPU temperatures
+            # NVIDIA GPU temperatures
                 try:
                     gpus = GPUtil.getGPUs()
                     for gpu in gpus:
                         if gpu.id not in gpu_temp_texts:
-                            gpu_temp_text_id = dpg.add_text(f"Graphics Name: {gpu.name} Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
+                            dpg.add_text(f"Graphics Name: {gpu.name}", bullet=True, parent=gpu_temp_placeholder)
+                            gpu_temp_text_id = dpg.add_text(f"Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
                             gpu_temp_texts[gpu.id] = gpu_temp_text_id
                         else:
-                            dpg.set_value(gpu_temp_texts[gpu.id], f"Graphics Name: {gpu.name} Temperature: {gpu.temperature}°C")
+                            dpg.set_value(gpu_temp_texts[gpu.id], f"Temperature: {gpu.temperature}°C")
                 except (ImportError, Exception) as e:
                     dpg.add_text(f"Error fetching NVIDIA GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
 
@@ -200,10 +201,11 @@ with dpg.window(
                             temperature_data = device.getTemperature()
                             if temperature_data is not None:
                                 if device.adapterName not in amd_gpu_temp_texts:
-                                    amd_gpu_temp_text_id = dpg.add_text(f"AMD GPU {device.adapterName} Temperature: {temperature_data}°C", bullet=True, parent=gpu_temp_placeholder)
+                                    dpg.add_text(f"AMD GPU {device.adapterName}", bullet=True, parent=gpu_temp_placeholder)
+                                    amd_gpu_temp_text_id = dpg.add_text(f"Temperature: {temperature_data}°C", bullet=True, parent=gpu_temp_placeholder)
                                     amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
                                 else:
-                                    dpg.set_value(amd_gpu_temp_texts[device.adapterName], f"AMD GPU {device.adapterName} Temperature: {temperature_data}°C")
+                                    dpg.set_value(amd_gpu_temp_texts[device.adapterName], f"Temperature: {temperature_data}°C")
                     except Exception as e:
                         dpg.add_text(f"Error fetching AMD GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
 
