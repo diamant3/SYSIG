@@ -4,3 +4,9 @@ GPUtil
 pyadl
 psutil
 humanize
+cpuinfo
+wmi
+platform
+socket
+threading
+subprocess
