@@ -85,7 +85,7 @@ def get_cpu_temperature():
             return temp['TC0D'][0].current
     return None
 
-def update_cpu_temperatures():
+def update_cpu_temperature():
     while True:
         cpu_temp = get_cpu_temperature()
         if isinstance(cpu_temp, (float, int)):
@@ -175,7 +175,7 @@ with dpg.window(
         gpu_temp_placeholder = dpg.add_group(horizontal=False)
         gpu_list = []
 
-        def update_gpu_temperatures():
+        def update_gpu_temperature():
             while True:
             # NVIDIA GPU temperatures
                 try:
@@ -316,8 +316,8 @@ with dpg.window(
         boot = bt.strftime("%m/%d/%Y %I:%M:%S %p")
         dpg.add_text(f"Last boot timestamp: {boot}", bullet=True)
         
-threading.Thread(target=update_gpu_temperatures, daemon=True).start()
-threading.Thread(target=update_cpu_temperatures, daemon=True).start()
+threading.Thread(target=update_gpu_temperature, daemon=True).start()
+threading.Thread(target=update_cpu_temperature, daemon=True).start()
 
 dpg.create_viewport(
     title="System Information Gatherer",
