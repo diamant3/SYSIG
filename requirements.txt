@@ -1,12 +1,7 @@
-dearpygui
-py-cpuinfo
-GPUtil
-pyadl
 psutil
 humanize
+dearpygui
 cpuinfo
-wmi
-platform
-socket
-threading
-subprocess
+GPUtil
+pyadl
+wmi #windows only

@@ -6,24 +6,26 @@
 
 from datetime import datetime
 
+import time
 import platform
 import socket
 import threading
 import subprocess
-import GPUtil
 import psutil
 import humanize
-import wmi
-import time
-import subprocess, re
+import dearpygui.dearpygui as dpg
+from cpuinfo import get_cpu_info
+import GPUtil
+
+# Conditionally import wmi for Windows
+if platform.system() == 'Windows':
+    import wmi
+
+# Check for AMD support and conditionally import pyadl
 AMD_SUPPORTED = False
 try:
     import pyadl
-    
-    # Just a dummy call to check if AMD driver can be accessed.
-    # If the driver isn't found, it should raise the ADLError.
     _ = pyadl.ADLManager.getInstance().getDevices()
-    
     AMD_SUPPORTED = True
 except (ImportError, Exception):
     pass
@@ -50,6 +52,51 @@ def get_cpu_util():
         dpg.set_value(cpu_progress_bar, 1.0 / 100.0 * cpu_val)
         dpg.configure_item(cpu_progress_bar, overlay=f"{cpu_val}%")
         
+# Get CPU Temperature
+def get_cpu_temperature():
+    if platform.system() == 'Windows':
+        try:
+            # Try using psutil first
+            temps = psutil.sensors_temperatures()
+            if 'coretemp' in temps:
+                return temps['coretemp'][0].current
+        except:
+            pass
+
+        try:
+            # Fallback to WMI approach if psutil does not provide the info
+            import wmi
+            w = wmi.WMI(namespace="root\\wmi")
+            temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
+            return temperature_info.CurrentTemperature / 10.0 - 273.15
+        except wmi.x_access_denied:
+            return "Access Denied (Run script as administrator)"
+        except Exception as e:
+            return f"Error: {e}"
+    elif platform.system() == 'Linux':
+        temp = psutil.sensors_temperatures()
+        if 'coretemp' in temp:
+            for item in temp['coretemp']:
+                if item.label == 'Package id 0':
+                    return item.current
+        elif 'Tdie' in temp:
+            return temp['Tdie'][0].current
+    elif platform.system() == 'Darwin':
+        temp = psutil.sensors_temperatures()
+        if 'TC0D' in temp:
+            return temp['TC0D'][0].current
+    return None
+
+def update_cpu_temperatures():
+    while True:
+        cpu_temp = get_cpu_temperature()
+        if isinstance(cpu_temp, (float, int)):
+            formatted_cpu_temp = "{:.2f}".format(cpu_temp)
+            dpg.set_value(cpu_temp_text, f"CPU Temperature: {formatted_cpu_temp}°C")
+        else:
+            dpg.set_value(cpu_temp_text, f"CPU Temperature: {cpu_temp}")
+             
+        time.sleep(1)
 
 # entry
 with dpg.window(
@@ -68,6 +115,7 @@ with dpg.window(
             dpg.add_text("CPU Utilization(Total):", bullet=True)
             threading.Thread(target=get_cpu_util, args=(), daemon=True).start()
             cpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
+        cpu_temp_text = dpg.add_text(f"CPU Temperature: " + str(get_cpu_temperature()) + "°C", bullet=True)
         dpg.add_text(f"{gci['count']} Total Core/s", bullet=True)
         dpg.add_text(f"{gci['arch']} Architecture", bullet=True)
         with dpg.tree_node(label="Cache/s"):
@@ -126,24 +174,40 @@ with dpg.window(
                                 dpg.add_text(f"{flags[FLAG]}")
 
     with dpg.collapsing_header(label="Graphics"):
+        gpu_temp_placeholder = dpg.add_group(horizontal=False)
         gpu_list = []
 
-        # amd
-        if AMD_SUPPORTED:
-            try:
-                amd = pyadl.ADLManager.getInstance().getDevices()
-                for gpu in amd:
-                    gpu_list.append(gpu.adapterName)
-            except:
-                dpg.add_text("Could not fetch AMD graphics information.", bullet=True)
-        else:
-            # nvidia
-            nvidia = GPUtil.getGPUs()
-            for gpu in nvidia:
-                gpu_list.append(gpu.name)
+        def update_gpu_temperatures():
+            while True:
+                # NVIDIA GPU temperatures
+                try:
+                    gpus = GPUtil.getGPUs()
+                    for gpu in gpus:
+                        if gpu.id not in gpu_temp_texts:
+                            gpu_temp_text_id = dpg.add_text(f"Graphics Name: {gpu.name} Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
+                            gpu_temp_texts[gpu.id] = gpu_temp_text_id
+                        else:
+                            dpg.set_value(gpu_temp_texts[gpu.id], f"Graphics Name: {gpu.name} Temperature: {gpu.temperature}°C")
+                except (ImportError, Exception) as e:
+                    dpg.add_text(f"Error fetching NVIDIA GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
 
-            for gfx in gpu_list:
-                dpg.add_text(f"Graphics Name: {gfx}", bullet=True)
+                # AMD GPU temperatures
+                if AMD_SUPPORTED:
+                    try:
+                        amd_manager = pyadl.ADLManager.getInstance()
+                        devices = amd_manager.getDevices()
+                        for device in devices:
+                            temperature_data = device.getTemperature()
+                            if temperature_data is not None:
+                                if device.adapterName not in amd_gpu_temp_texts:
+                                    amd_gpu_temp_text_id = dpg.add_text(f"AMD GPU {device.adapterName} Temperature: {temperature_data}°C", bullet=True, parent=gpu_temp_placeholder)
+                                    amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
+                                else:
+                                    dpg.set_value(amd_gpu_temp_texts[device.adapterName], f"AMD GPU {device.adapterName} Temperature: {temperature_data}°C")
+                    except Exception as e:
+                        dpg.add_text(f"Error fetching AMD GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
+
+                time.sleep(1)
 
     with dpg.collapsing_header(label="Memory"):
         mem = psutil.virtual_memory()
@@ -165,80 +229,6 @@ with dpg.window(
         dpg.add_text(f"Used Swap Memory: {swap_used}({swap_percent}%)", bullet=True)
         dpg.add_text(f"Free Swap Memory: {swap_free}", bullet=True)
         dpg.add_text(f"Total Swap Memory: {swap_total}", bullet=True)
-        
-    with dpg.collapsing_header(label="Temperature"):
-        def get_cpu_temperature():
-            if platform.system() == 'Windows':
-                try:
-                    import wmi
-                    w = wmi.WMI(namespace="root\wmi")
-                    temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
-                    return temperature_info.CurrentTemperature / 10.0 - 273.15
-                except wmi.x_access_denied:
-                    return "Access Denied (Run script as administrator)"
-                except Exception as e:
-                    return f"Error: {e}"
-            elif platform.system() == 'Linux':
-                temp = psutil.sensors_temperatures()
-                if 'coretemp' in temp:  # Typically for Intel and some AMD CPUs on Linux
-                    for item in temp['coretemp']:
-                        if item.label == 'Package id 0':  # Overall CPU temperature
-                            return item.current
-                elif 'Tdie' in temp:  # Typically for AMD processors
-                    return temp['Tdie'][0].current
-            elif platform.system() == 'Darwin':  # macOS
-                temp = psutil.sensors_temperatures()
-                if 'TC0D' in temp:
-                    return temp['TC0D'][0].current
-
-            return None
-
-        cpu_temp_text = dpg.add_text(f"CPU Temperature: {get_cpu_temperature()}°C", bullet=True)
-    
-        # Placeholder for GPU temperatures, which will be parent to all GPU temperature texts.
-        gpu_temp_placeholder = dpg.add_group(horizontal=False)
-
-        def update_temperatures():
-            """Continuously update the CPU and GPU temperatures"""
-            while True:
-                # Update CPU temperature
-                cpu_temp = get_cpu_temperature()
-                if cpu_temp:
-                    dpg.set_value(cpu_temp_text, f"CPU Temperature: {cpu_temp}°C")
-                else:
-                    dpg.set_value(cpu_temp_text, "CPU Temperature: Not Available")
-                    
-                # Update NVIDIA GPU temperature
-                try:
-                    gpus = GPUtil.getGPUs()
-                    for gpu in gpus:
-                        if gpu.id not in gpu_temp_texts:
-                            gpu_temp_text_id = dpg.add_text(f"NVIDIA GPU {gpu.id} ({gpu.name}) Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
-                            gpu_temp_texts[gpu.id] = gpu_temp_text_id
-                        else:
-                            dpg.set_value(gpu_temp_texts[gpu.id], f"NVIDIA GPU {gpu.id} ({gpu.name}) Temperature: {gpu.temperature}°C")
-                except (ImportError, Exception) as e:
-                    dpg.add_text(f"Error fetching NVIDIA GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
-
-                # Update AMD GPU temperature (using pyadl)
-                if AMD_SUPPORTED:
-                    try:
-                        amd_manager = pyadl.ADLManager.getInstance()
-                        devices = amd_manager.getDevices()
-                        for device in devices:
-                            temperature_data = device.getTemperature()
-                            if temperature_data is not None:
-                                if device.adapterName not in amd_gpu_temp_texts:
-                                    amd_gpu_temp_text_id = dpg.add_text(f"AMD GPU {device.adapterName} Temperature: {temperature_data}°C", bullet=True, parent=gpu_temp_placeholder)
-                                    amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
-                                else:
-                                    dpg.set_value(amd_gpu_temp_texts[device.adapterName], f"AMD GPU {device.adapterName} Temperature: {temperature_data}°C")
-                    except Exception as e:
-                        dpg.add_text(f"Error fetching AMD GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
-
-                time.sleep(1)  # Update every second
-
-        threading.Thread(target=update_temperatures, daemon=True).start()
 
     with dpg.collapsing_header(label="Disk"):
         with dpg.table(
@@ -325,6 +315,9 @@ with dpg.window(
         bt = datetime.fromtimestamp(timestamp)
         boot = bt.strftime("%m/%d/%Y %I:%M:%S %p")
         dpg.add_text(f"Last boot timestamp: {boot}", bullet=True)
+        
+threading.Thread(target=update_gpu_temperatures, daemon=True).start()
+threading.Thread(target=update_cpu_temperatures, daemon=True).start()
 
 dpg.create_viewport(
     title="System Information Gatherer",
