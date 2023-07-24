@@ -40,6 +40,7 @@ dpg.create_context()
 
 gpu_temp_texts = {}  # Store NVIDIA GPU temp text IDs
 amd_gpu_temp_texts = {}  # Store AMD GPU temp text IDs
+gpu_progress_bars = {}  # Store NVIDIA GPU progress bar IDs
 
 # Get CPU Total Utilization
 def get_cpu_util():
@@ -56,9 +57,11 @@ def get_cpu_temperature():
         try:
             # Try using psutil first
             temps = psutil.sensors_temperatures()
+            #print("Using psutil:", temps)  # Debugging line
             if 'coretemp' in temps:
                 return temps['coretemp'][0].current
-        except:
+        except Exception as e:
+            #print("psutil error:", e)  # Debugging line
             pass
 
         try:
@@ -66,10 +69,12 @@ def get_cpu_temperature():
             import wmi
             w = wmi.WMI(namespace="root\\wmi")
             temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
+            #print("Using WMI:", temperature_info.CurrentTemperature)  # Debugging line
             return temperature_info.CurrentTemperature / 10.0 - 273.15
         except wmi.x_access_denied:
             return "Access Denied (Run script as administrator)"
         except Exception as e:
+            #print("WMI error:", e)  # Debugging line
             return f"Error: {e}"
     elif platform.system() == 'Linux':
         temp = psutil.sensors_temperatures()
@@ -94,6 +99,19 @@ def update_cpu_temperature():
         else:
             dpg.set_value(cpu_temp_text, f"CPU Temperature: {cpu_temp}")
              
+        time.sleep(1)
+
+def get_gpu_util():
+    """Get GPU Utilization"""
+    while True:
+        try:
+            gpus = GPUtil.getGPUs()
+            for gpu in gpus:
+                gpu_val = gpu.load * 100  # Convert fraction to percentage
+                dpg.set_value(gpu_progress_bars[gpu.id], 1.0 / 100.0 * gpu_val)
+                dpg.configure_item(gpu_progress_bars[gpu.id], overlay=f"{gpu_val:.2f}%")
+        except (ImportError, Exception) as e:
+            pass
         time.sleep(1)
 
 # entry
@@ -177,14 +195,22 @@ with dpg.window(
 
         def update_gpu_temperature():
             while True:
-            # NVIDIA GPU temperatures
+            # NVIDIA GPU temperatures and utilization
                 try:
                     gpus = GPUtil.getGPUs()
                     for gpu in gpus:
                         if gpu.id not in gpu_temp_texts:
                             dpg.add_text(f"Graphics Name: {gpu.name}", bullet=True, parent=gpu_temp_placeholder)
+                            
+                            # Add GPU utilization progress bar here
+                            with dpg.group(horizontal=True, parent=gpu_temp_placeholder):
+                                dpg.add_text("GPU Utilization:", bullet=True)
+                                gpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
+                                gpu_progress_bars[gpu.id] = gpu_progress_bar
+
                             gpu_temp_text_id = dpg.add_text(f"Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
                             gpu_temp_texts[gpu.id] = gpu_temp_text_id
+
                         else:
                             dpg.set_value(gpu_temp_texts[gpu.id], f"Temperature: {gpu.temperature}°C")
                 except (ImportError, Exception) as e:
@@ -318,6 +344,7 @@ with dpg.window(
         
 threading.Thread(target=update_gpu_temperature, daemon=True).start()
 threading.Thread(target=update_cpu_temperature, daemon=True).start()
+threading.Thread(target=get_gpu_util, daemon=True).start()
 
 dpg.create_viewport(
     title="System Information Gatherer",
