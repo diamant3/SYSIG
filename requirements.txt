@@ -1,7 +1,7 @@
 psutil
 humanize
 dearpygui
-cpuinfo
+py-cpuinfo
 GPUtil
 pyadl
 wmi #windows only

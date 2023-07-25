@@ -218,7 +218,7 @@ with dpg.window(
                         amd_manager = pyadl.ADLManager.getInstance()
                         devices = amd_manager.getDevices()
                         for device in devices:
-                            temperature_data = device.getTemperature()
+                            temperature_data = device.getCurrentTemperature()
                             if temperature_data is not None:
                                 if device.adapterName not in amd_gpu_temp_texts:
                                     dpg.add_text(f"AMD GPU {device.adapterName}", bullet=True, parent=gpu_temp_placeholder)
