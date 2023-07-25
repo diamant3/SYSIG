@@ -15,9 +15,6 @@ import GPUtil
 import psutil
 import humanize
 
-# Conditionally import wmi for Windows
-if platform.system() == 'Windows':
-    import wmi
 
 # Check for AMD support and conditionally import pyadl
 AMD_SUPPORTED = False
@@ -51,51 +48,6 @@ def get_cpu_util():
         dpg.set_value(cpu_progress_bar, 1.0 / 100.0 * cpu_val)
         dpg.configure_item(cpu_progress_bar, overlay=f"{cpu_val}%")
         
-# Get CPU Temperature
-def get_cpu_temperature():
-    if platform.system() == 'Windows':
-        try:
-            # Try using psutil first
-            temps = psutil.sensors_temperatures()
-            if 'coretemp' in temps:
-                return temps['coretemp'][0].current
-        except Exception as e:
-            pass
-
-        try:
-            # Fallback to WMI approach if psutil does not provide the info
-            import wmi
-            w = wmi.WMI(namespace="root\\wmi")
-            temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
-            return temperature_info.CurrentTemperature / 10.0 - 273.15
-        except wmi.x_access_denied:
-            return "Access Denied (Run script as administrator)"
-        except Exception as e:
-            return f"Error: {e}"
-    elif platform.system() == 'Linux':
-        temp = psutil.sensors_temperatures()
-        if 'coretemp' in temp:
-            for item in temp['coretemp']:
-                if item.label == 'Package id 0':
-                    return item.current
-        elif 'Tdie' in temp:
-            return temp['Tdie'][0].current
-    elif platform.system() == 'Darwin':
-        temp = psutil.sensors_temperatures()
-        if 'TC0D' in temp:
-            return temp['TC0D'][0].current
-    return None
-
-def update_cpu_temperature():
-    while True:
-        cpu_temp = get_cpu_temperature()
-        if isinstance(cpu_temp, (float, int)):
-            formatted_cpu_temp = "{:.2f}".format(cpu_temp)
-            dpg.set_value(cpu_temp_text, f"CPU Temperature: {formatted_cpu_temp}°C")
-        else:
-            dpg.set_value(cpu_temp_text, f"CPU Temperature: {cpu_temp}")
-             
-        time.sleep(1)
 
 # entry
 with dpg.window(
@@ -114,7 +66,6 @@ with dpg.window(
             dpg.add_text("CPU Utilization(Total):", bullet=True)
             threading.Thread(target=get_cpu_util, args=(), daemon=True).start()
             cpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
-        cpu_temp_text = dpg.add_text(f"CPU Temperature: " + str(get_cpu_temperature()) + "°C", bullet=True)
         dpg.add_text(f"{gci['count']} Total Core/s", bullet=True)
         dpg.add_text(f"{gci['arch']} Architecture", bullet=True)
         with dpg.tree_node(label="Cache/s"):
@@ -339,7 +290,6 @@ with dpg.window(
         dpg.add_text(f"Last boot timestamp: {boot}", bullet=True)
         
 threading.Thread(target=update_gpu_temperature, daemon=True).start()
-threading.Thread(target=update_cpu_temperature, daemon=True).start()
 threading.Thread(target=get_gpu_util, daemon=True).start()
 
 dpg.create_viewport(
