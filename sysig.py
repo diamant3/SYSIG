@@ -4,7 +4,7 @@
     Simple GUI tool to gather system information in your computer
 """
 
-# pylint: disable=line-too-long
+# pylint: disable=line-too-long, import-error
 # pylint: disable=C0103
 
 from datetime import datetime
@@ -29,8 +29,10 @@ try:
     AMD_SUPPORTED = True
 except ImportError:
     pass
-except Exception as e:
-    print(f"Unexpected error while checking for AMD support: {e}")
+except Exception as amd_error:
+    # Only print the AMD error if no NVIDIA GPUs are detected
+    if not GPUtil.getGPUs():
+        print(f"Unexpected error while checking for AMD support: {amd_error}")
 
 # Check for Windows and conditionally import winreg
 if platform.system() == 'Windows':
