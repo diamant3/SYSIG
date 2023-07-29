@@ -5,7 +5,7 @@
 """
 
 # pylint: disable=line-too-long, import-error
-# pylint: disable=C0103
+# pylint: disable=C0103, W0718
 
 from datetime import datetime
 
@@ -139,6 +139,7 @@ with dpg.window(
         gpu_list = []
 
         def handle_nvidia_gpus():
+            """handle NVIDIA GPUs"""
             gpus = GPUtil.getGPUs()
             for gpu in gpus:
                 if gpu.id not in gpu_temp_texts:
@@ -155,6 +156,7 @@ with dpg.window(
                     dpg.set_value(gpu_temp_texts[gpu.id], f"Temperature: {gpu.temperature}°C")
 
         def handle_amd_gpus():
+            """handle AMD GPUs"""
             if not AMD_SUPPORTED:
                 return
 
@@ -186,7 +188,7 @@ with dpg.window(
                     dpg.add_text(f"Error fetching AMD GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
 
                 time.sleep(1)
-                
+
         # Get GPU Utilization
         def get_gpu_util():
             """Get GPU Utilization"""
