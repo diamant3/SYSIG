@@ -8,6 +8,7 @@ from datetime import datetime
 
 import time
 import platform
+import winreg
 import socket
 import threading
 import subprocess
@@ -288,6 +289,15 @@ with dpg.window(
         bt = datetime.fromtimestamp(timestamp)
         boot = bt.strftime("%m/%d/%Y %I:%M:%S %p")
         dpg.add_text(f"Last boot timestamp: {boot}", bullet=True)
+
+        if platform.system() == "Windows":
+            with dpg.tree_node(label="BIOS"):
+                bios = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\BIOS")
+                vendor = winreg.QueryValueEx(bios, "BIOSVendor")
+                version = winreg.QueryValueEx(bios, "BIOSVersion")
+
+                dpg.add_text(f"Vendor: {vendor[0]}", bullet=True)
+                dpg.add_text(f"Version: {version[0]}", bullet=True)
         
 threading.Thread(target=update_gpu_temperature, daemon=True).start()
 threading.Thread(target=get_gpu_util, daemon=True).start()
