@@ -4,6 +4,12 @@
     Simple GUI tool to gather system information in your computer
 """
 
+# pylint: disable=line-too-long
+# pylint: disable=C0103
+
+import dearpygui.dearpygui as dpg
+from cpuinfo import get_cpu_info
+
 from datetime import datetime
 
 import time
@@ -27,9 +33,6 @@ except (ImportError, Exception):
     pass
 
 
-import dearpygui.dearpygui as dpg
-from cpuinfo import get_cpu_info
-
 gci = get_cpu_info()
 WIN_WIDTH = 800
 WIN_HEIGHT = 400
@@ -48,7 +51,7 @@ def get_cpu_util():
         cpu_val = psutil.cpu_percent(interval=1, percpu=False)
         dpg.set_value(cpu_progress_bar, 1.0 / 100.0 * cpu_val)
         dpg.configure_item(cpu_progress_bar, overlay=f"{cpu_val}%")
-        
+
 
 # entry
 with dpg.window(
@@ -139,10 +142,12 @@ with dpg.window(
                         dpg.set_value(gpu_progress_bars[gpu.id], 1.0 / 100.0 * gpu_val)
                         dpg.configure_item(gpu_progress_bars[gpu.id], overlay=f"{gpu_val:.2f}%")
                 except (ImportError, Exception) as e:
+                    print(f"An error occurred: {e}")
                     pass
                 time.sleep(1)
 
         def update_gpu_temperature():
+            """Get GPU Temperature and Util Updates"""
             while True:
             # NVIDIA GPU temperatures and utilization
                 try:
@@ -150,7 +155,7 @@ with dpg.window(
                     for gpu in gpus:
                         if gpu.id not in gpu_temp_texts:
                             dpg.add_text(f"Graphics Name: {gpu.name}", bullet=True, parent=gpu_temp_placeholder)
-                                                        
+
                             with dpg.group(horizontal=True, parent=gpu_temp_placeholder):
                                 dpg.add_text("GPU Utilization:", bullet=True)
                                 gpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
@@ -161,8 +166,15 @@ with dpg.window(
 
                         else:
                             dpg.set_value(gpu_temp_texts[gpu.id], f"Temperature: {gpu.temperature}°C")
-                except (ImportError, Exception) as e:
-                    dpg.add_text(f"Error fetching NVIDIA GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
+                except ImportError as ie:
+                    # Handle the ImportError
+                    dpg.add_text(f"Error importing GPUtil: {ie}", bullet=True, parent=gpu_temp_placeholder)
+                except GPUtil.GPUtilException as ge:
+                    # Handle the GPUtilException
+                    dpg.add_text(f"Error fetching NVIDIA GPU information: {ge}", bullet=True, parent=gpu_temp_placeholder)
+                except Exception as e:
+                    # Handle other specific exceptions
+                    dpg.add_text(f"Unexpected error: {e}", bullet=True, parent=gpu_temp_placeholder)
 
                 # AMD GPU temperatures
                 if AMD_SUPPORTED:
@@ -236,7 +248,7 @@ with dpg.window(
                         dpg.add_text(f"{humanize.naturalsize(usage.used)}({usage.percent}%)")
                         dpg.add_text(f"{humanize.naturalsize(usage.free)}")
                         dpg.add_text(f"{humanize.naturalsize(usage.total)}")
-                        
+
 
     with dpg.collapsing_header(label="Network"):
         addr_list = psutil.net_if_addrs()
@@ -298,7 +310,7 @@ with dpg.window(
 
                 dpg.add_text(f"Vendor: {vendor[0]}", bullet=True)
                 dpg.add_text(f"Version: {version[0]}", bullet=True)
-        
+
 threading.Thread(target=update_gpu_temperature, daemon=True).start()
 threading.Thread(target=get_gpu_util, daemon=True).start()
 
