@@ -11,7 +11,6 @@ from datetime import datetime
 
 import time
 import platform
-import winreg
 import socket
 import threading
 import subprocess
@@ -28,9 +27,16 @@ try:
     import pyadl
     _ = pyadl.ADLManager.getInstance().getDevices()
     AMD_SUPPORTED = True
-except (ImportError, Exception):
+except ImportError:
     pass
+except Exception as e:
+    print(f"Unexpected error while checking for AMD support: {e}")
 
+# Check for Windows and conditionally import winreg
+if platform.system() == 'Windows':
+    import winreg
+else:
+    winreg = None
 
 gci = get_cpu_info()
 WIN_WIDTH = 800
