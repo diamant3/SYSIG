@@ -7,9 +7,6 @@
 # pylint: disable=line-too-long
 # pylint: disable=C0103
 
-import dearpygui.dearpygui as dpg
-from cpuinfo import get_cpu_info
-
 from datetime import datetime
 
 import time
@@ -18,6 +15,8 @@ import winreg
 import socket
 import threading
 import subprocess
+import dearpygui.dearpygui as dpg
+from cpuinfo import get_cpu_info
 import GPUtil
 import psutil
 import humanize
@@ -143,7 +142,6 @@ with dpg.window(
                         dpg.configure_item(gpu_progress_bars[gpu.id], overlay=f"{gpu_val:.2f}%")
                 except (ImportError, Exception) as e:
                     print(f"An error occurred: {e}")
-                    pass
                 time.sleep(1)
 
         def update_gpu_temperature():
@@ -169,12 +167,9 @@ with dpg.window(
                 except ImportError as ie:
                     # Handle the ImportError
                     dpg.add_text(f"Error importing GPUtil: {ie}", bullet=True, parent=gpu_temp_placeholder)
-                except GPUtil.GPUtilException as ge:
-                    # Handle the GPUtilException
-                    dpg.add_text(f"Error fetching NVIDIA GPU information: {ge}", bullet=True, parent=gpu_temp_placeholder)
-                except Exception as e:
+                except Exception as e:  # Replacing GPUtil.GPUtilException with a generic Exception
                     # Handle other specific exceptions
-                    dpg.add_text(f"Unexpected error: {e}", bullet=True, parent=gpu_temp_placeholder)
+                    dpg.add_text(f"Error fetching NVIDIA GPU information: {e}", bullet=True, parent=gpu_temp_placeholder)
 
                 # AMD GPU temperatures
                 if AMD_SUPPORTED:
