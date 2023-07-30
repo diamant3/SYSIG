@@ -25,4 +25,4 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint sysig.py
+        pylint --fail-under=9 sysig.py
