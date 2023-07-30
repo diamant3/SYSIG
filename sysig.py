@@ -4,9 +4,6 @@
     Simple GUI tool to gather system information in your computer
 """
 
-# pylint: disable=line-too-long, import-error
-# pylint: disable=C0103, W0718
-
 from datetime import datetime
 
 import time
