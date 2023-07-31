@@ -140,10 +140,18 @@ with dpg.window(
             gpus = GPUtil.getGPUs()
             for gpu in gpus:
                 if gpu.id not in gpu_temp_texts:
-                    dpg.add_text(f"Graphics Name: {gpu.name}", bullet=True, parent=gpu_temp_placeholder)
+                    dpg.add_text(
+                        f"Graphics Name: {gpu.name}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
                     with dpg.group(horizontal=True, parent=gpu_temp_placeholder):
                         dpg.add_text("GPU Utilization:", bullet=True)
-                        gpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
+                        gpu_progress_bar = dpg.add_progress_bar(
+                            default_value=0.0,
+                            overlay="0.0%",
+                            width=200
+                        )
                         gpu_progress_bars[gpu.id] = gpu_progress_bar
 
                     gpu_temp_text_id = dpg.add_text(
@@ -152,9 +160,11 @@ with dpg.window(
                         parent=gpu_temp_placeholder
                     )
                     gpu_temp_texts[gpu.id] = gpu_temp_text_id
-
                 else:
-                    dpg.set_value(gpu_temp_texts[gpu.id], f"Temperature: {gpu.temperature}°C")
+                    dpg.set_value(
+                        gpu_temp_texts[gpu.id],
+                        f"Temperature: {gpu.temperature}°C"
+                    )
 
         def handle_amd_gpus():
             """handle AMD GPUs"""
