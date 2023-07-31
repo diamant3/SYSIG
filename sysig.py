@@ -8,10 +8,11 @@ from datetime import datetime
 
 import time
 import platform
-import winreg
 import socket
 import threading
 import subprocess
+import dearpygui.dearpygui as dpg
+from cpuinfo import get_cpu_info
 import GPUtil
 import psutil
 import humanize
@@ -23,12 +24,18 @@ try:
     import pyadl
     _ = pyadl.ADLManager.getInstance().getDevices()
     AMD_SUPPORTED = True
-except (ImportError, Exception):
+except ImportError:
     pass
+except Exception as amd_error:
+    # Only print the AMD error if no NVIDIA GPUs are detected
+    if not GPUtil.getGPUs():
+        print(f"Unexpected error while checking for AMD support: {amd_error}")
 
-
-import dearpygui.dearpygui as dpg
-from cpuinfo import get_cpu_info
+# Check for Windows and conditionally import winreg
+if platform.system() == 'Windows':
+    import winreg
+else:
+    winreg = None
 
 gci = get_cpu_info()
 WIN_WIDTH = 800
@@ -48,7 +55,7 @@ def get_cpu_util():
         cpu_val = psutil.cpu_percent(interval=1, percpu=False)
         dpg.set_value(cpu_progress_bar, 1.0 / 100.0 * cpu_val)
         dpg.configure_item(cpu_progress_bar, overlay=f"{cpu_val}%")
-        
+
 
 # entry
 with dpg.window(
@@ -128,6 +135,94 @@ with dpg.window(
         gpu_temp_placeholder = dpg.add_group(horizontal=False)
         gpu_list = []
 
+        def handle_nvidia_gpus():
+            """handle NVIDIA GPUs"""
+            gpus = GPUtil.getGPUs()
+            for gpu in gpus:
+                if gpu.id not in gpu_temp_texts:
+                    dpg.add_text(
+                        f"Graphics Name: {gpu.name}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                    with dpg.group(horizontal=True, parent=gpu_temp_placeholder):
+                        dpg.add_text("GPU Utilization:", bullet=True)
+                        gpu_progress_bar = dpg.add_progress_bar(
+                            default_value=0.0,
+                            overlay="0.0%",
+                            width=200
+                        )
+                        gpu_progress_bars[gpu.id] = gpu_progress_bar
+
+                    gpu_temp_text_id = dpg.add_text(
+                        f"Temperature: {gpu.temperature}°C",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                    gpu_temp_texts[gpu.id] = gpu_temp_text_id
+                else:
+                    dpg.set_value(
+                        gpu_temp_texts[gpu.id],
+                        f"Temperature: {gpu.temperature}°C"
+                    )
+
+        def handle_amd_gpus():
+            """handle AMD GPUs"""
+            if not AMD_SUPPORTED:
+                return
+
+            amd_manager = pyadl.ADLManager.getInstance()
+            devices = amd_manager.getDevices()
+            for device in devices:
+                temperature_data = device.getCurrentTemperature()
+                if temperature_data is not None:
+                    if device.adapterName not in amd_gpu_temp_texts:
+                        dpg.add_text(
+                        f"AMD GPU {device.adapterName}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                    amd_gpu_temp_text_id = dpg.add_text(
+                        f"Temperature: {temperature_data}°C",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                    amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
+                else:
+                    dpg.set_value(
+                        amd_gpu_temp_texts[device.adapterName],
+                        f"Temperature: {temperature_data}°C"
+                    )
+
+        def update_gpu_temperature():
+            """Get GPU Temperature and Util Updates"""
+            while True:
+                try:
+                    handle_nvidia_gpus()
+                except ImportError as import_error:
+                    dpg.add_text(
+                        f"Error importing GPUtil: {import_error}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                except Exception as general_exception:
+                    dpg.add_text(
+                        f"Error fetching NVIDIA GPU information: {general_exception}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+
+                try:
+                    handle_amd_gpus()
+                except Exception as general_exception:
+                    dpg.add_text(
+                        f"Error fetching AMD GPU temperature: {general_exception}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+
+                time.sleep(1)
+
         # Get GPU Utilization
         def get_gpu_util():
             """Get GPU Utilization"""
@@ -138,49 +233,8 @@ with dpg.window(
                         gpu_val = gpu.load * 100
                         dpg.set_value(gpu_progress_bars[gpu.id], 1.0 / 100.0 * gpu_val)
                         dpg.configure_item(gpu_progress_bars[gpu.id], overlay=f"{gpu_val:.2f}%")
-                except (ImportError, Exception) as e:
-                    pass
-                time.sleep(1)
-
-        def update_gpu_temperature():
-            while True:
-            # NVIDIA GPU temperatures and utilization
-                try:
-                    gpus = GPUtil.getGPUs()
-                    for gpu in gpus:
-                        if gpu.id not in gpu_temp_texts:
-                            dpg.add_text(f"Graphics Name: {gpu.name}", bullet=True, parent=gpu_temp_placeholder)
-                                                        
-                            with dpg.group(horizontal=True, parent=gpu_temp_placeholder):
-                                dpg.add_text("GPU Utilization:", bullet=True)
-                                gpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
-                                gpu_progress_bars[gpu.id] = gpu_progress_bar
-
-                            gpu_temp_text_id = dpg.add_text(f"Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
-                            gpu_temp_texts[gpu.id] = gpu_temp_text_id
-
-                        else:
-                            dpg.set_value(gpu_temp_texts[gpu.id], f"Temperature: {gpu.temperature}°C")
-                except (ImportError, Exception) as e:
-                    dpg.add_text(f"Error fetching NVIDIA GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
-
-                # AMD GPU temperatures
-                if AMD_SUPPORTED:
-                    try:
-                        amd_manager = pyadl.ADLManager.getInstance()
-                        devices = amd_manager.getDevices()
-                        for device in devices:
-                            temperature_data = device.getCurrentTemperature()
-                            if temperature_data is not None:
-                                if device.adapterName not in amd_gpu_temp_texts:
-                                    dpg.add_text(f"AMD GPU {device.adapterName}", bullet=True, parent=gpu_temp_placeholder)
-                                    amd_gpu_temp_text_id = dpg.add_text(f"Temperature: {temperature_data}°C", bullet=True, parent=gpu_temp_placeholder)
-                                    amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
-                                else:
-                                    dpg.set_value(amd_gpu_temp_texts[device.adapterName], f"Temperature: {temperature_data}°C")
-                    except Exception as e:
-                        dpg.add_text(f"Error fetching AMD GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
-
+                except (ImportError, Exception) as general_exception:
+                    print(f"An error occurred: {general_exception}")
                 time.sleep(1)
 
     with dpg.collapsing_header(label="Memory"):
@@ -236,7 +290,6 @@ with dpg.window(
                         dpg.add_text(f"{humanize.naturalsize(usage.used)}({usage.percent}%)")
                         dpg.add_text(f"{humanize.naturalsize(usage.free)}")
                         dpg.add_text(f"{humanize.naturalsize(usage.total)}")
-                        
 
     with dpg.collapsing_header(label="Network"):
         addr_list = psutil.net_if_addrs()
@@ -298,7 +351,7 @@ with dpg.window(
 
                 dpg.add_text(f"Vendor: {vendor[0]}", bullet=True)
                 dpg.add_text(f"Version: {version[0]}", bullet=True)
-        
+
 threading.Thread(target=update_gpu_temperature, daemon=True).start()
 threading.Thread(target=get_gpu_util, daemon=True).start()
 
