@@ -146,7 +146,11 @@ with dpg.window(
                         gpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
                         gpu_progress_bars[gpu.id] = gpu_progress_bar
 
-                    gpu_temp_text_id = dpg.add_text(f"Temperature: {gpu.temperature}°C", bullet=True, parent=gpu_temp_placeholder)
+                    gpu_temp_text_id = dpg.add_text(
+                        f"Temperature: {gpu.temperature}°C",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
                     gpu_temp_texts[gpu.id] = gpu_temp_text_id
 
                 else:
@@ -163,26 +167,49 @@ with dpg.window(
                 temperature_data = device.getCurrentTemperature()
                 if temperature_data is not None:
                     if device.adapterName not in amd_gpu_temp_texts:
-                        dpg.add_text(f"AMD GPU {device.adapterName}", bullet=True, parent=gpu_temp_placeholder)
-                        amd_gpu_temp_text_id = dpg.add_text(f"Temperature: {temperature_data}°C", bullet=True, parent=gpu_temp_placeholder)
-                        amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
-                    else:
-                        dpg.set_value(amd_gpu_temp_texts[device.adapterName], f"Temperature: {temperature_data}°C")
+                        dpg.add_text(
+                        f"AMD GPU {device.adapterName}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                    amd_gpu_temp_text_id = dpg.add_text(
+                        f"Temperature: {temperature_data}°C",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                    amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
+                else:
+                    dpg.set_value(
+                        amd_gpu_temp_texts[device.adapterName],
+                        f"Temperature: {temperature_data}°C"
+                    )
 
         def update_gpu_temperature():
             """Get GPU Temperature and Util Updates"""
             while True:
                 try:
                     handle_nvidia_gpus()
-                except ImportError as ie:
-                    dpg.add_text(f"Error importing GPUtil: {ie}", bullet=True, parent=gpu_temp_placeholder)
-                except Exception as e:
-                    dpg.add_text(f"Error fetching NVIDIA GPU information: {e}", bullet=True, parent=gpu_temp_placeholder)
+                except ImportError as import_error:
+                    dpg.add_text(
+                        f"Error importing GPUtil: {import_error}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
+                except Exception as general_exception:
+                    dpg.add_text(
+                        f"Error fetching NVIDIA GPU information: {general_exception}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
 
                 try:
                     handle_amd_gpus()
-                except Exception as e:
-                    dpg.add_text(f"Error fetching AMD GPU temperature: {e}", bullet=True, parent=gpu_temp_placeholder)
+                except Exception as general_exception:
+                    dpg.add_text(
+                        f"Error fetching AMD GPU temperature: {general_exception}",
+                        bullet=True,
+                        parent=gpu_temp_placeholder
+                    )
 
                 time.sleep(1)
 
@@ -196,8 +223,8 @@ with dpg.window(
                         gpu_val = gpu.load * 100
                         dpg.set_value(gpu_progress_bars[gpu.id], 1.0 / 100.0 * gpu_val)
                         dpg.configure_item(gpu_progress_bars[gpu.id], overlay=f"{gpu_val:.2f}%")
-                except (ImportError, Exception) as e:
-                    print(f"An error occurred: {e}")
+                except (ImportError, Exception) as general_exception:
+                    print(f"An error occurred: {general_exception}")
                 time.sleep(1)
 
     with dpg.collapsing_header(label="Memory"):
@@ -253,7 +280,6 @@ with dpg.window(
                         dpg.add_text(f"{humanize.naturalsize(usage.used)}({usage.percent}%)")
                         dpg.add_text(f"{humanize.naturalsize(usage.free)}")
                         dpg.add_text(f"{humanize.naturalsize(usage.total)}")
-
 
     with dpg.collapsing_header(label="Network"):
         addr_list = psutil.net_if_addrs()
