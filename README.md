@@ -1,32 +1,33 @@
-![banner](res/banner.png)
+![banner](resource/banner.png)
 
 # Introduction
 Small and simple GUI tool to gather your computer's information using Python.
+
 [![Pylint](https://github.com/diamant3/SYSIG/actions/workflows/Pylint.yml/badge.svg)](https://github.com/diamant3/SYSIG/actions/workflows/Pylint.yml)
 
 ## Demo
 https://github.com/diamant3/SYSIG/assets/71203851/b0454b5e-e3cb-4050-8f3c-853fb65eed16
 
 ## Run
-Upgrade pip then install required modules:
+
+Requirements:
+ - python (3.8 - latest)
+ - poetry
+
+Install dependencies:
 
 ```shell
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+poetry install
 ```
 
-then run:
+Run:
 
-```shell
-python sysig.py
 ```
-
-> [!Important]
-> If you see a `ModuleNotFoundError: No module named 'distutils'` error, please install
-> setuptools using the command `python -m pip install setuptools`.
+poetry run python sysig.py
+```
 
 > [!Note]
-> This is just a hobby project and all information you will see in the app is based on the Python modules's detection capabilities. Thank you for your understanding!
+> This is just a hobby project and all information you will see in the app is based on the Python modules' detection capabilities. Thank you for your understanding!
 
 ## Credits
 - [Hardware detection in python](https://www.thepythoncode.com/article/get-hardware-system-information-python)

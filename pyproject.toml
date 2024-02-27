@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "sysig"
+version = "0.0.1"
+description = "Simple application to gather your system information in your computer."
+authors = ["diamant3 <diamant3@proton.me>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+dearpygui = "^1.11.0"
+py-cpuinfo = "^9.0.0"
+GPUtil = "^1.4.0"
+pyadl = "^0.1"
+psutil = "^5.9.8"
+humanize = "^4.9.0"
+setuptools = "^69.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
