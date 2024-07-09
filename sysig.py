@@ -1,121 +1,124 @@
 """
     SYSIG - System Information Gatherer
-
-    Simple GUI tool to gather system information in your computer
 """
 
+import threading
+import socket
+import platform
+import subprocess
+import os
 from datetime import datetime
 
-import time
-import platform
-import socket
-import threading
-import subprocess
 import dearpygui.dearpygui as dpg
+
 from cpuinfo import get_cpu_info
-import GPUtil
-import psutil
+
 import humanize
+import psutil
 
-
-# Check for AMD support and conditionally import pyadl
-AMD_SUPPORTED = False
-try:
-    import pyadl
-    _ = pyadl.ADLManager.getInstance().getDevices()
-    AMD_SUPPORTED = True
-except ImportError:
-    pass
-except Exception as amd_error:
-    # Only print the AMD error if no NVIDIA GPUs are detected
-    if not GPUtil.getGPUs():
-        print(f"Unexpected error while checking for AMD support: {amd_error}")
-
-# Check for Windows and conditionally import winreg
 if platform.system() == 'Windows':
     import winreg
-else:
-    winreg = None
 
-gci = get_cpu_info()
-WIN_WIDTH = 800
-WIN_HEIGHT = 400
+AMD_SUPPORTED = False
+NVIDIA_SUPPORTED = False
+try:
+    import pyadl
+    import GPUtil
+    if len(pyadl.ADLManager.getInstance().getDevices()) > 0:
+        AMD_SUPPORTED = True
+
+    if len(GPUtil.getGPUs()) > 0:
+        NVIDIA_SUPPORTED = True
+except ImportError:
+    pass
+
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
+COLOR = (0, 255, 54)
+ICON = os.getcwd() + "/resource/icon.ico"
+
+GCI = get_cpu_info()
 
 dpg.create_context()
+dpg.create_viewport(
+    title="SYSIG",
+    small_icon=ICON,
+    large_icon=ICON,
+    width=WINDOW_WIDTH,
+    max_width=WINDOW_WIDTH,
+    height=WINDOW_HEIGHT,
+    max_height=WINDOW_HEIGHT,
+    clear_color=(18, 18, 18)
+)
+dpg.setup_dearpygui()
 
-gpu_temp_texts = {}  # Store NVIDIA GPU temp text IDs
-amd_gpu_temp_texts = {}  # Store AMD GPU temp text IDs
-gpu_progress_bars = {}  # Store NVIDIA GPU progress bar IDs
-
-# Get CPU Total Utilization
-def get_cpu_util():
-    """Get CPU Total Utilization"""
-
-    while True:
-        cpu_val = psutil.cpu_percent(interval=1, percpu=False)
-        dpg.set_value(cpu_progress_bar, 1.0 / 100.0 * cpu_val)
-        dpg.configure_item(cpu_progress_bar, overlay=f"{cpu_val}%")
-
-
-# entry
+# Main window
 with dpg.window(
-        label=f"Computer Name: {platform.node()}",
-        no_close=True,
-        no_resize=True,
+        no_title_bar=True,
         no_move=True,
-        width=WIN_WIDTH - 18,
-        height=WIN_HEIGHT
-) as main_window:
-    with dpg.collapsing_header(label="Processor"):
-        with dpg.group(horizontal=True):
-            dpg.add_text(f"{gci['brand_raw']} @", bullet=True)
-            dpg.add_text(f"{gci['hz_actual_friendly']}")
-        with dpg.group(horizontal=True):
-            dpg.add_text("CPU Utilization(Total):", bullet=True)
-            threading.Thread(target=get_cpu_util, args=(), daemon=True).start()
-            cpu_progress_bar = dpg.add_progress_bar(default_value=0.0, overlay="0.0%", width=200)
-        dpg.add_text(f"{gci['count']} Total Core/s", bullet=True)
-        dpg.add_text(f"{gci['arch']} Architecture", bullet=True)
-        with dpg.tree_node(label="Cache/s"):
+        width=WINDOW_WIDTH,
+        height=WINDOW_HEIGHT,
+        pos=(0, 0),
+    ):
+    dpg.add_text("System Information Gatherer", pos=(int(WINDOW_WIDTH / 2.9), 12), color=COLOR)
+
+    dpg.add_button(
+        label="Processor Information",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 48),
+        callback=lambda: dpg.configure_item("Processor_modal_ID", show=True),
+    )
+
+    with dpg.window(
+        label="Processor Information",
+        modal=True,
+        show=False,
+        tag="Processor_modal_ID",
+        autosize=True,
+    ):
+
+        freq = GCI['hz_actual_friendly']
+        dpg.add_text(f"Processor Name: {GCI['brand_raw']} @ {freq}", bullet=True)
+        dpg.add_text(f"Processor Count: {GCI['count']}", bullet=True)
+        dpg.add_text(f"Architecture: {GCI['arch']}", bullet=True)
+
+        with dpg.tree_node(label="Processor Caches"):
             try:
-                l1_i = humanize.naturalsize(gci['l1_instruction_cache_size'], gnu=True)
-                dpg.add_text(f"L1 Instruction Cache Size: {l1_i}")
+                l1_data = humanize.naturalsize(GCI['l1_instruction_cache_size'], gnu=True)
+                dpg.add_text(f"L1 Instruction Cache Size: {l1_data}", bullet=True)
             except KeyError:
-                dpg.add_text("L1 Instruction Cache Size: Can't determine")
+                dpg.add_text("L1 Instruction Cache Size: Can't determine", bullet=True)
 
             try:
-                l1_d = humanize.naturalsize(gci['l1_data_cache_size'], gnu=True)
-                dpg.add_text(f"L1 Data Cache Size: {l1_d}")
+                l1_instruction = humanize.naturalsize(GCI['l1_data_cache_size'],  gnu=True)
+                dpg.add_text(f"L1 Data Cache Size: {l1_instruction}", bullet=True)
             except KeyError:
-                dpg.add_text("L1 Data Cache Size: Can't determine")
+                dpg.add_text("L1 Data Cache Size: Can't determine", bullet=True)
 
             try:
-                l2 = humanize.naturalsize(gci['l2_cache_size'], gnu=True)
-                dpg.add_text(f"L2 Cache Size: {l2}")
+                l2 = humanize.naturalsize(GCI['l2_cache_size'],  gnu=True)
+                dpg.add_text(f"L2 Cache Size: {l2}", bullet=True)
             except KeyError:
-                dpg.add_text("L2 Cache Size: Can't determine")
+                dpg.add_text("L2 Cache Size: Can't determine", bullet=True)
 
             try:
-                l3 = humanize.naturalsize(gci['l3_cache_size'], gnu=True)
-                dpg.add_text(f"L3 Cache Size: {l3}")
+                l3 = humanize.naturalsize(GCI['l3_cache_size'],  gnu=True)
+                dpg.add_text(f"L3 Cache Size: {l3}", bullet=True)
             except KeyError:
-                dpg.add_text("L3 Cache Size: Can't determine")
+                dpg.add_text("L3 Cache Size: Can't determine", bullet=True)
 
         with dpg.tree_node(label="Flags"):
             with dpg.table(
                 header_row=False,
-                resizable=True,
                 policy=dpg.mvTable_SizingStretchProp,
                 row_background=True,
-                borders_outerV=True,
-                borders_innerV=True,
-                borders_outerH=True,
                 borders_innerH=True,
-                delay_search=True
+                borders_innerV=True,
             ):
-                COL = 11
+                COL = 8
                 FLAG = 0
-                flags = gci['flags']
+                flags = GCI['flags']
 
                 for _ in range(COL):
                     dpg.add_table_column()
@@ -131,119 +134,68 @@ with dpg.window(
                             else:
                                 dpg.add_text(f"{flags[FLAG]}")
 
-    with dpg.collapsing_header(label="Graphics"):
-        gpu_temp_placeholder = dpg.add_group(horizontal=False)
-        gpu_list = []
+        with dpg.group(horizontal=True):
+            dpg.add_text("CPU Utilization(Total): ", bullet=True)
 
-        def handle_nvidia_gpus():
-            """handle NVIDIA GPUs"""
-            gpus = GPUtil.getGPUs()
-            for gpu in gpus:
-                if gpu.id not in gpu_temp_texts:
-                    dpg.add_text(
-                        f"Graphics Name: {gpu.name}",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
-                    with dpg.group(horizontal=True, parent=gpu_temp_placeholder):
-                        dpg.add_text("GPU Utilization:", bullet=True)
-                        gpu_progress_bar = dpg.add_progress_bar(
-                            default_value=0.0,
-                            overlay="0.0%",
-                            width=200
-                        )
-                        gpu_progress_bars[gpu.id] = gpu_progress_bar
+            def cpu_util():
+                """ cpu utilization thread """
+                while 1:
+                    val = psutil.cpu_percent(interval=1, percpu=False)
+                    dpg.set_value("util_progress", (1.0 / 100.0) * val)
+                    dpg.configure_item("util_progress", overlay=f"{val}%")
+            threading.Thread(target=cpu_util, args=(), daemon=True).start()
+            dpg.add_progress_bar(tag="util_progress", overlay="0.0%", height=16,)
 
-                    gpu_temp_text_id = dpg.add_text(
-                        f"Temperature: {gpu.temperature}°C",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
-                    gpu_temp_texts[gpu.id] = gpu_temp_text_id
-                else:
-                    dpg.set_value(
-                        gpu_temp_texts[gpu.id],
-                        f"Temperature: {gpu.temperature}°C"
-                    )
+    dpg.add_button(
+        label="Graphics Information",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 96),
+        callback=lambda: dpg.configure_item("Graphics_modal_ID", show=True),
+    )
 
-        def handle_amd_gpus():
-            """handle AMD GPUs"""
-            if not AMD_SUPPORTED:
-                return
+    # GPU Temperature detection is unsupported
+    with dpg.window(
+        label="Graphics Information",
+        modal=True,
+        show=False,
+        tag="Graphics_modal_ID",
+        autosize=True,
+    ):
+        gpu_devices = []
+        with dpg.group(horizontal=True):
+            if AMD_SUPPORTED:
+                devices = pyadl.ADLManager.getInstance().getDevices()
+                for device in devices:
+                    gpu_devices.append(device.adapterName.decode('utf-8'))
 
-            amd_manager = pyadl.ADLManager.getInstance()
-            devices = amd_manager.getDevices()
-            for device in devices:
-                temperature_data = device.getCurrentTemperature()
-                if temperature_data is not None:
-                    if device.adapterName not in amd_gpu_temp_texts:
-                        dpg.add_text(
-                        f"AMD GPU {device.adapterName}",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
-                    amd_gpu_temp_text_id = dpg.add_text(
-                        f"Temperature: {temperature_data}°C",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
-                    amd_gpu_temp_texts[device.adapterName] = amd_gpu_temp_text_id
-                else:
-                    dpg.set_value(
-                        amd_gpu_temp_texts[device.adapterName],
-                        f"Temperature: {temperature_data}°C"
-                    )
+            if NVIDIA_SUPPORTED:
+                devices = GPUtil.getGPUs()
+                for device in devices:
+                    gpu_devices.append(device.gpu_name)
+            dpg.add_text(f"Graphics Card: {gpu_devices}", bullet=True)
 
-        def update_gpu_temperature():
-            """Get GPU Temperature and Util Updates"""
-            while True:
-                try:
-                    handle_nvidia_gpus()
-                except ImportError as import_error:
-                    dpg.add_text(
-                        f"Error importing GPUtil: {import_error}",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
-                except Exception as general_exception:
-                    dpg.add_text(
-                        f"Error fetching NVIDIA GPU information: {general_exception}",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
+    dpg.add_button(
+        label="Memory Information",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 144),
+        callback=lambda: dpg.configure_item("Memory_modal_ID", show=True),
+    )
 
-                try:
-                    handle_amd_gpus()
-                except Exception as general_exception:
-                    dpg.add_text(
-                        f"Error fetching AMD GPU temperature: {general_exception}",
-                        bullet=True,
-                        parent=gpu_temp_placeholder
-                    )
-
-                time.sleep(1)
-
-        # Get GPU Utilization
-        def get_gpu_util():
-            """Get GPU Utilization"""
-            while True:
-                try:
-                    gpus = GPUtil.getGPUs()
-                    for gpu in gpus:
-                        gpu_val = gpu.load * 100
-                        dpg.set_value(gpu_progress_bars[gpu.id], 1.0 / 100.0 * gpu_val)
-                        dpg.configure_item(gpu_progress_bars[gpu.id], overlay=f"{gpu_val:.2f}%")
-                except (ImportError, Exception) as general_exception:
-                    print(f"An error occurred: {general_exception}")
-                time.sleep(1)
-
-    with dpg.collapsing_header(label="Memory"):
+    with dpg.window(
+        label="Memory Information",
+        modal=True,
+        show=False,
+        tag="Memory_modal_ID",
+        autosize=True,
+    ):
         mem = psutil.virtual_memory()
         mem_used = humanize.naturalsize(mem.used)
         mem_percent = mem.percent
         mem_avail = humanize.naturalsize(mem.available)
         mem_total = humanize.naturalsize(mem.total)
-        dpg.add_text("MAIN MEMORY", color=(0, 255, 0))
+        dpg.add_text("MAIN MEMORY")
         dpg.add_text(f"Used Memory: {mem_used}({mem_percent}%)", bullet=True)
         dpg.add_text(f"Available Memory: {mem_avail}", bullet=True)
         dpg.add_text(f"Total Memory: {mem_total}", bullet=True)
@@ -253,12 +205,26 @@ with dpg.window(
         swap_percent = swap.percent
         swap_free = humanize.naturalsize(swap.free)
         swap_total = humanize.naturalsize(swap.total)
-        dpg.add_text("SWAP MEMORY", color=(0, 255, 0))
+        dpg.add_text("SWAP MEMORY")
         dpg.add_text(f"Used Swap Memory: {swap_used}({swap_percent}%)", bullet=True)
         dpg.add_text(f"Free Swap Memory: {swap_free}", bullet=True)
         dpg.add_text(f"Total Swap Memory: {swap_total}", bullet=True)
 
-    with dpg.collapsing_header(label="Disk"):
+    dpg.add_button(
+        label="Disk Information",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 192),
+        callback=lambda: dpg.configure_item("Disk_modal_ID", show=True,)
+    )
+
+    with dpg.window(
+        label="Disk Information",
+        modal=True,
+        show=False,
+        tag="Disk_modal_ID",
+        autosize=True,
+    ):
         with dpg.table(
             resizable=True,
             policy=dpg.mvTable_SizingStretchProp,
@@ -291,7 +257,21 @@ with dpg.window(
                         dpg.add_text(f"{humanize.naturalsize(usage.free)}")
                         dpg.add_text(f"{humanize.naturalsize(usage.total)}")
 
-    with dpg.collapsing_header(label="Network"):
+    dpg.add_button(
+        label="Network Information",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 240),
+        callback=lambda: dpg.configure_item("Network_modal_ID", show=True,)
+    )
+
+    with dpg.window(
+        label="Network Information",
+        modal=True,
+        show=False,
+        tag="Network_modal_ID",
+        autosize=True,
+    ):
         addr_list = psutil.net_if_addrs()
         for name, addresses in addr_list.items():
             with dpg.group(horizontal=True):
@@ -304,7 +284,21 @@ with dpg.window(
                 if address.family == psutil.AF_LINK:
                     dpg.add_text(f"MAC Address: {address.address}", bullet=True)
 
-    with dpg.collapsing_header(label="Operating System"):
+    dpg.add_button(
+        label="OS Information",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 288),
+        callback=lambda: dpg.configure_item("OS_modal_ID", show=True,)
+    )
+
+    with dpg.window(
+        label="OS Information",
+        modal=True,
+        show=False,
+        tag="OS_modal_ID",
+        autosize=True,
+    ):
         if platform.system() == 'Windows':
             try:
                 BRAND = subprocess.check_output('wmic csproduct get vendor', shell=True)
@@ -345,26 +339,37 @@ with dpg.window(
 
         if platform.system() == "Windows":
             with dpg.tree_node(label="BIOS"):
-                bios = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\BIOS")
+                bios = winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"HARDWARE\DESCRIPTION\System\BIOS"
+                )
                 vendor = winreg.QueryValueEx(bios, "BIOSVendor")
                 version = winreg.QueryValueEx(bios, "BIOSVersion")
 
                 dpg.add_text(f"Vendor: {vendor[0]}", bullet=True)
                 dpg.add_text(f"Version: {version[0]}", bullet=True)
 
-threading.Thread(target=update_gpu_temperature, daemon=True).start()
-threading.Thread(target=get_gpu_util, daemon=True).start()
+    dpg.add_button(
+        label="About SYSIG",
+        width=256,
+        height=32,
+        pos=(int(WINDOW_WIDTH / 3.5), 384),
+        callback=lambda: dpg.configure_item("About_modal_ID", show=True,)
+    )
 
-dpg.create_viewport(
-    title="System Information Gatherer",
-    small_icon="res/icon.ico",
-    large_icon="res/icon.ico",
-    resizable=False,
-    max_width=WIN_WIDTH,
-    max_height=WIN_HEIGHT
-)
-dpg.setup_dearpygui()
-dpg.set_primary_window(main_window, True)
+    with dpg.window(
+        label="About SYSIG",
+        modal=True,
+        show=False,
+        tag="About_modal_ID",
+        autosize=True,
+    ):
+        dpg.add_text("SYSIG - System Information Gatherer")
+        dpg.add_text("Simple application to gather your system information in your computer.")
+        dpg.add_text("")
+        dpg.add_text("GitHub Repo: https://github.com/diamant3/SYSIG")
+        dpg.add_text("E-Mail: diamant3@proton.me")
+
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
