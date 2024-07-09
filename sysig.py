@@ -1,9 +1,6 @@
-import dearpygui.dearpygui as dpg
-
-from cpuinfo import get_cpu_info
-
-import humanize
-import psutil
+"""
+    SYSIG - System Information Gatherer
+"""
 
 import threading
 import socket
@@ -11,6 +8,13 @@ import platform
 import subprocess
 import os
 from datetime import datetime
+
+import dearpygui.dearpygui as dpg
+
+from cpuinfo import get_cpu_info
+
+import humanize
+import psutil
 
 if platform.system() == 'Windows':
     import winreg
@@ -74,7 +78,8 @@ with dpg.window(
         autosize=True,
     ):
 
-        dpg.add_text(f"Processor Name: {GCI['brand_raw']} @ {GCI['hz_actual_friendly']}", bullet=True)
+        freq = humanize.naturalsize(GCI['hz_actual_friendly'], gnu=True)
+        dpg.add_text(f"Processor Name: {GCI['brand_raw']} @ {freq}", bullet=True)
         dpg.add_text(f"Processor Count: {GCI['count']}", bullet=True)
         dpg.add_text(f"Architecture: {GCI['arch']}", bullet=True)
 
@@ -82,22 +87,26 @@ with dpg.window(
             try:
                 l1_data = humanize.naturalsize(GCI['l1_instruction_cache_size'], gnu=True)
                 dpg.add_text(f"L1 Instruction Cache Size: {l1_data}", bullet=True)
-            except KeyError: dpg.add_text("L1 Instruction Cache Size: Can't determine", bullet=True)
+            except KeyError: 
+                dpg.add_text("L1 Instruction Cache Size: Can't determine", bullet=True)
 
             try:
-                l1_instruction = humanize.naturalsize(GCI['l1_data_cache_size'],  gnu=True) 
+                l1_instruction = humanize.naturalsize(GCI['l1_data_cache_size'],  gnu=True)
                 dpg.add_text(f"L1 Data Cache Size: {l1_instruction}", bullet=True)
-            except KeyError: dpg.add_text("L1 Data Cache Size: Can't determine", bullet=True)
+            except KeyError: 
+                dpg.add_text("L1 Data Cache Size: Can't determine", bullet=True)
 
             try:
                 l2 = humanize.naturalsize(GCI['l2_cache_size'],  gnu=True) 
                 dpg.add_text(f"L2 Cache Size: {l2}", bullet=True)
-            except KeyError: dpg.add_text("L2 Cache Size: Can't determine", bullet=True)
+            except KeyError: 
+                dpg.add_text("L2 Cache Size: Can't determine", bullet=True)
 
             try: 
                 l3 = humanize.naturalsize(GCI['l3_cache_size'],  gnu=True)
                 dpg.add_text(f"L3 Cache Size: {l3}", bullet=True)
-            except KeyError: dpg.add_text("L3 Cache Size: Can't determine", bullet=True)
+            except KeyError: 
+                dpg.add_text("L3 Cache Size: Can't determine", bullet=True)
 
         with dpg.tree_node(label="Flags"):
             with dpg.table(
@@ -108,7 +117,7 @@ with dpg.window(
                 borders_innerV=True,
             ):
                 COL = 8
-                flag = 0
+                FLAG = 0
                 flags = GCI['flags']
 
                 for _ in range(COL):
@@ -119,11 +128,11 @@ with dpg.window(
                 for row in range(rows):
                     with dpg.table_row():
                         for col in range(COL):
-                            flag = row * COL + col
-                            if flag >= len(flags):
+                            FLAG = row * COL + col
+                            if FLAG >= len(flags):
                                 dpg.add_text("---")
                             else:
-                                dpg.add_text(f"{flags[flag]}")
+                                dpg.add_text(f"{flags[FLAG]}")
 
         with dpg.group(horizontal=True):
             dpg.add_text("CPU Utilization(Total): ", bullet=True)
@@ -209,7 +218,7 @@ with dpg.window(
 
     with dpg.window(
         label="Disk Information",
-        modal=True, 
+        modal=True,
         show=False,
         tag="Disk_modal_ID",
         autosize=True,
@@ -256,7 +265,7 @@ with dpg.window(
 
     with dpg.window(
         label="Network Information",
-        modal=True, 
+        modal=True,
         show=False,
         tag="Network_modal_ID",
         autosize=True,
@@ -283,7 +292,7 @@ with dpg.window(
 
     with dpg.window(
         label="OS Information",
-        modal=True, 
+        modal=True,
         show=False,
         tag="OS_modal_ID",
         autosize=True,
@@ -328,7 +337,10 @@ with dpg.window(
 
         if platform.system() == "Windows":
             with dpg.tree_node(label="BIOS"):
-                bios = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\BIOS")
+                bios = winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"HARDWARE\DESCRIPTION\System\BIOS"
+                )
                 vendor = winreg.QueryValueEx(bios, "BIOSVendor")
                 version = winreg.QueryValueEx(bios, "BIOSVersion")
 
@@ -345,7 +357,7 @@ with dpg.window(
 
     with dpg.window(
         label="About SYSIG",
-        modal=True, 
+        modal=True,
         show=False,
         tag="About_modal_ID",
         autosize=True,
