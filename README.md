@@ -5,8 +5,9 @@ Small and simple GUI tool to gather your computer's information using Python.
 
 [![Pylint](https://github.com/diamant3/SYSIG/actions/workflows/Pylint.yml/badge.svg)](https://github.com/diamant3/SYSIG/actions/workflows/Pylint.yml)
 
-## Demo
-https://github.com/diamant3/SYSIG/assets/71203851/b0454b5e-e3cb-4050-8f3c-853fb65eed16
+## Screenshot
+<img width="473" alt="sysig" src="https://github.com/diamant3/SYSIG/assets/71203851/07ecfc5f-b846-4998-b812-b3abcd1284fa">
+
 
 ## Run
 
