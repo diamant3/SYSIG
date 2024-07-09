@@ -78,7 +78,7 @@ with dpg.window(
         autosize=True,
     ):
 
-        freq = humanize.naturalsize(GCI['hz_actual_friendly'], gnu=True)
+        freq = GCI['hz_actual_friendly']
         dpg.add_text(f"Processor Name: {GCI['brand_raw']} @ {freq}", bullet=True)
         dpg.add_text(f"Processor Count: {GCI['count']}", bullet=True)
         dpg.add_text(f"Architecture: {GCI['arch']}", bullet=True)
