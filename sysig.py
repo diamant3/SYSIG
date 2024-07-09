@@ -54,10 +54,10 @@ dpg.setup_dearpygui()
 
 # Main window
 with dpg.window(
-        no_title_bar=True, 
-        no_move=True, 
-        width=WINDOW_WIDTH, 
-        height=WINDOW_HEIGHT, 
+        no_title_bar=True,
+        no_move=True,
+        width=WINDOW_WIDTH,
+        height=WINDOW_HEIGHT,
         pos=(0, 0),
     ):
     dpg.add_text("System Information Gatherer", pos=(int(WINDOW_WIDTH / 2.9), 12), color=COLOR)
@@ -72,8 +72,8 @@ with dpg.window(
 
     with dpg.window(
         label="Processor Information",
-        modal=True, 
-        show=False, 
+        modal=True,
+        show=False,
         tag="Processor_modal_ID",
         autosize=True,
     ):
@@ -87,31 +87,31 @@ with dpg.window(
             try:
                 l1_data = humanize.naturalsize(GCI['l1_instruction_cache_size'], gnu=True)
                 dpg.add_text(f"L1 Instruction Cache Size: {l1_data}", bullet=True)
-            except KeyError: 
+            except KeyError:
                 dpg.add_text("L1 Instruction Cache Size: Can't determine", bullet=True)
 
             try:
                 l1_instruction = humanize.naturalsize(GCI['l1_data_cache_size'],  gnu=True)
                 dpg.add_text(f"L1 Data Cache Size: {l1_instruction}", bullet=True)
-            except KeyError: 
+            except KeyError:
                 dpg.add_text("L1 Data Cache Size: Can't determine", bullet=True)
 
             try:
-                l2 = humanize.naturalsize(GCI['l2_cache_size'],  gnu=True) 
+                l2 = humanize.naturalsize(GCI['l2_cache_size'],  gnu=True)
                 dpg.add_text(f"L2 Cache Size: {l2}", bullet=True)
-            except KeyError: 
+            except KeyError:
                 dpg.add_text("L2 Cache Size: Can't determine", bullet=True)
 
-            try: 
+            try:
                 l3 = humanize.naturalsize(GCI['l3_cache_size'],  gnu=True)
                 dpg.add_text(f"L3 Cache Size: {l3}", bullet=True)
-            except KeyError: 
+            except KeyError:
                 dpg.add_text("L3 Cache Size: Can't determine", bullet=True)
 
         with dpg.tree_node(label="Flags"):
             with dpg.table(
-                header_row=False, 
-                policy=dpg.mvTable_SizingStretchProp, 
+                header_row=False,
+                policy=dpg.mvTable_SizingStretchProp,
                 row_background=True,
                 borders_innerH=True,
                 borders_innerV=True,
@@ -136,7 +136,9 @@ with dpg.window(
 
         with dpg.group(horizontal=True):
             dpg.add_text("CPU Utilization(Total): ", bullet=True)
+
             def cpu_util():
+                """ cpu utilization thread """
                 while 1:
                     val = psutil.cpu_percent(interval=1, percpu=False)
                     dpg.set_value("util_progress", (1.0 / 100.0) * val)
@@ -183,8 +185,8 @@ with dpg.window(
 
     with dpg.window(
         label="Memory Information",
-        modal=True, 
-        show=False, 
+        modal=True,
+        show=False,
         tag="Memory_modal_ID",
         autosize=True,
     ):
