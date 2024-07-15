@@ -14,7 +14,7 @@ GPUtil = "^1.4.0"
 pyadl = "^0.1"
 psutil = "^5.9.8"
 humanize = "^4.9.0"
-setuptools = "^69.1.1"
+setuptools = "^70.0.0"
 
 
 [build-system]
